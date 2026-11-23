@@ -104,6 +104,9 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
  LaunchedEffect(date,location,config,notifications,imsakMinutes,adhanAudioEnabled,adhanVolume){
   alarmScheduler.schedule(listOf(today,tomorrow),notifications)
   saveSettings(PrayerSettings(cityName=if(gpsPoint!=null)"Lokasi GPS" else city.name,latitude=coords.first,longitude=coords.second,zoneId=zone.id,useGps=gpsPoint!=null,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes,adhanAudioEnabled=adhanAudioEnabled,adhanVolume=adhanVolume))
+  val widgetManager=android.appwidget.AppWidgetManager.getInstance(context)
+  val widgetIds=widgetManager.getAppWidgetIds(android.content.ComponentName(context,com.winsmediatama.adzanreminder.widget.PrayerWidgetProvider::class.java))
+  if(widgetIds.isNotEmpty())com.winsmediatama.adzanreminder.widget.PrayerWidgetProvider().onUpdate(context,widgetManager,widgetIds)
  }
  Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding().padding(16.dp)){
   Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween){
