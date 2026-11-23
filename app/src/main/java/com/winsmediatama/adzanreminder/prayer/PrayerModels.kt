@@ -24,7 +24,8 @@ data class PrayerCalculationConfig(
     val asrAdjustmentMinutes: Int = 0,
     val maghribAdjustmentMinutes: Int = 0,
     val ishaAdjustmentMinutes: Int = 0,
-    val ihtiyatMinutes: Int = 0
+    val ihtiyatMinutes: Int = 0,
+    val imsakMinutes: Int = 10
 )
 
 data class PrayerLocation(
