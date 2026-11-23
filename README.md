@@ -25,9 +25,14 @@ Offline-first Android prayer schedule and reminder foundation.
 - AlarmManager setAndAllowWhileIdle schedules reminders; exact delivery is not guaranteed under Android battery policies.
 - Two-day rolling schedule refreshed after delivered prayer notifications, app schedule changes and device reboot.
 
-### 9: Adhan alarm foundation
-- Alarm reminders trigger a high-priority notification for each prayer.
-- Actual adhan audio playback, user-selected recitation, volume controls, silent mode behavior, and reliable exact-alarm handling remain future refinements. Current notification is NOT full adhan audio.
+### 9: Bundled offline Adhan audio
+- Alarm can play a bundled MP3 recording for each prayer, including a dedicated Fajr recording.
+- Foreground media-playback service keeps audio running and provides a Stop action notification.
+- Settings include adhan playback enable/disable, volume slider, and test-play button.
+- Audio files are downloaded by CI from the Internet Archive source during build and bundled into the APK; playback itself is offline.
+- Source collection: Adhan Recordings from Doha, Qatar (Internet Archive), presented by the source reference as Public Domain Mark 1.0. License/rights metadata should be reviewed at source before release.
+- Source: https://archive.org/details/adhan.recordings.from.doha.qatar
+- MP3 files: Fajr, Dhuhr, Asr, Maghrib, Isha (five recordings).
 
 ### 10: Official Kemenag validation
 - Calculation engine remains astronomical approximation.
@@ -54,12 +59,13 @@ Offline-first Android prayer schedule and reminder foundation.
 - Widget updates periodically and may be delayed by OS policy.
 
 ## Build/CI
-- CI workflow exists. Build and CI have intentionally not been run per user's instruction.
+- Android CI builds Debug APK, verifies APK output, and uploads artifact for 14 days.
+- CI downloads five adhan MP3s from the listed Internet Archive source before building; the APK contains the audio for offline playback.
 
 ## Further refinement roadmap
 - Official Kemenag/SIHAT data validation or a verified reference dataset.
 - Geospatial timezone boundaries/polygon lookup.
-- Full adhan audio player and exact-alarm permission workflow.
+- Exact-alarm permission workflow and audio-focus/silent-mode policy verification.
 - Widget countdown and richer design.
 - Hijri/Ramadan official Indonesia date source and local adjustment controls.
 - Android 13–16 permission, alarm and widget behavior verification.
