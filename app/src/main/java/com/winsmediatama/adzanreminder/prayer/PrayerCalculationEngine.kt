@@ -32,7 +32,7 @@ class PrayerCalculationEngine {
         val asr = solarEvent(asrAltitude, false)?.plusMinutes(config.asrAdjustmentMinutes.toLong() + config.ihtiyatMinutes.toLong())
         val maghrib = solarEvent(sunriseAltitude, false)?.plusMinutes(config.maghribAdjustmentMinutes.toLong() + config.ihtiyatMinutes.toLong())
         val isha = if (config.method == PrayerMethod.UMM_AL_QURA) {
-            maghrib?.plusMinutes(90 + config.ishaAdjustmentMinutes)
+            maghrib?.plusMinutes(90L + config.ishaAdjustmentMinutes.toLong())
         } else {
             solarEvent(-config.method.ishaAngle, false)
                 ?.plusMinutes(config.ishaAdjustmentMinutes.toLong() + config.ihtiyatMinutes.toLong())
