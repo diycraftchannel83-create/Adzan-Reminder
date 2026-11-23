@@ -1,0 +1,84 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish Android release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Download bundled Adhan MP3 assets
+        run: |
+          mkdir -p app/src/main/res/raw
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_fajr.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_01_Fajr_Adhan.mp3"
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_dhuhr.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_02_Dhuhr_Adhan.mp3"
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_asr.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_03_Asr_Adhan.mp3"
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_maghrib.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_04_Maghrib_Adhan.mp3"
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_isha.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_05_Isha_Adhan.mp3"
+          python3 - <<'PY'
+          from pathlib import Path
+          files = list(Path("app/src/main/res/raw").glob("adhan_*.mp3"))
+          assert len(files) == 5, f"Expected 5 Adhan MP3s, got {len(files)}"
+          for p in files:
+              data = p.read_bytes()
+              assert len(data) > 50_000, f"{p.name}: download appears incomplete"
+              valid = data[:3] == b"ID3" or (len(data) > 1 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0)
+              assert valid, f"{p.name}: invalid MP3 signature"
+              print(f"Validated {p.name} ({len(data)} bytes)")
+          PY
+
+      - name: Run unit tests
+        run: gradle --no-daemon testDebugUnitTest
+
+      - name: Build release APK
+        run: gradle --no-daemon assembleRelease
+
+      - name: Verify release APK
+        run: |
+          APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+          test -f "$APK"
+          test -s "$APK"
+          ls -lh "$APK"
+
+      - name: Prepare release metadata
+        id: meta
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="manual-${GITHUB_RUN_NUMBER}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "apk_name=Adzan-Reminder-${TAG}.apk" >> "$GITHUB_OUTPUT"
+          cp app/build/outputs/apk/release/app-release-unsigned.apk "Adzan-Reminder-${TAG}.apk"
+
+      - name: Publish GitHub Release and upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: Adzan Reminder ${{ steps.meta.outputs.tag }}
+          generate_release_notes: true
+          files: Adzan-Reminder-${{ steps.meta.outputs.tag }}.apk
+          fail_on_unmatched_files: true
