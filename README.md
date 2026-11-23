@@ -51,6 +51,8 @@ Offline-first Android prayer schedule and reminder foundation.
 
 ## QA and audit status
 
+See [QA_CHECKLIST.md](QA_CHECKLIST.md) for the complete deferred build, device, alarm, audio, widget, location, and official timetable validation checklist.
+
 - Audit patches applied: settings dialog scrolling, persistence keys for audio/volume/imsak, GPS label persistence, audio-focus denial handling, system date/time/timezone/app-update alarm rescheduling, elevation correction for sunrise/Maghrib, manual WIB/WITA/WIT override, and exact alarms on supported API levels.
 - Unit tests added for prayer-event chronology, Asr madhab ordering, method differences, next-prayer rollover, and Indonesia timezone resolver boundaries.
 - CI validates all five downloaded MP3 files for count, size, and basic MP3 signature, then runs unit tests before building.
@@ -75,7 +77,7 @@ Offline-first Android prayer schedule and reminder foundation.
 - CI downloads five adhan MP3s from the listed Internet Archive source before building; the APK contains the audio for offline playback.
 
 ## Further refinement roadmap
-- Official Kemenag/SIHAT data validation or a verified reference dataset.
+- Official Kemenag/SIHAT data validation or a verified reference dataset. Official timetable portal: https://simbi.kemenag.go.id/jadwal-sholat. Developer API access requires application/approval and a private token: https://sihat.kemenag.go.id/pengembang.
 - Geospatial timezone boundaries/polygon lookup.
 - Verify exact-alarm access behavior and audio-focus/silent-mode policy on Android 12–16.
 - Widget second-by-second live countdown (currently refreshed snapshot) and richer design.
