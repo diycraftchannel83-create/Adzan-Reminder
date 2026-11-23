@@ -37,7 +37,7 @@ class PrayerCalculationEngine {
             solarEvent(-config.method.ishaAngle, false)
                 ?.plusMinutes(config.ishaAdjustmentMinutes.toLong() + config.ihtiyatMinutes.toLong())
         }
-        val imsak = fajr?.minusMinutes(10)
+        val imsak = fajr?.minusMinutes(config.imsakMinutes.coerceIn(0, 60).toLong())
         return PrayerSchedule(date, location, fajr, sunrise, dhuhr, asr, maghrib, isha, imsak)
     }
 
