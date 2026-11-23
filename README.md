@@ -23,7 +23,7 @@ Offline-first Android prayer schedule and reminder foundation.
 - Android notification channel and prayer notifications.
 - Runtime POST_NOTIFICATIONS permission request when reminders are enabled (Android 13+).
 - AlarmManager setAndAllowWhileIdle schedules reminders; exact delivery is not guaranteed under Android battery policies.
-- Two-day rolling schedule refreshed after delivered prayer notifications, app schedule changes and device reboot.
+- Two-day rolling schedule refreshed after delivered prayer notifications, app schedule changes, device reboot, date/time/timezone changes, and app replacement.
 
 ### 9: Bundled offline Adhan audio
 - Alarm can play a bundled MP3 recording for each prayer, including a dedicated Fajr recording.
@@ -39,8 +39,8 @@ Offline-first Android prayer schedule and reminder foundation.
 - Kemenag parameter parity, ihtiyat, elevation and official schedule comparison are not certified. Do not claim official accuracy yet.
 
 ### 11: Android home widget
-- AppWidget provider and layout showing selected location, date and daily prayer schedule.
-- Refresh interval set to 30 minutes by Android widget scheduling. Widget currently displays schedule times, not a live countdown.
+- AppWidget provider and layout showing selected location, date, daily prayer schedule, next prayer and a countdown snapshot.
+- Refreshes after app settings/location changes, alarm delivery, system date/time/timezone changes, and periodic Android widget updates.
 
 ### 12: Ramadan & imsak
 - Ramadan panel calculates an estimated Ramadan date and countdown from Android Hijrah calendar.
@@ -53,6 +53,7 @@ Offline-first Android prayer schedule and reminder foundation.
 - Audit patches applied: settings dialog scrolling, persistence keys for audio/volume/imsak, GPS label persistence, audio-focus denial handling, system date/time/timezone/app-update alarm rescheduling, and elevation correction for sunrise/Maghrib.
 - Unit tests added for prayer-event chronology, Asr madhab ordering, method differences, next-prayer rollover, and Indonesia timezone resolver boundaries.
 - CI validates all five downloaded MP3 files for count, size, and basic MP3 signature, then runs unit tests before building.
+- Optional exact alarm access is requested from settings; if unavailable, scheduler falls back to Android inexact alarms.
 - **Build/test intentionally not executed during this patch phase** per request. CI validation remains pending.
 
 ## Accuracy & limitations
@@ -72,7 +73,7 @@ Offline-first Android prayer schedule and reminder foundation.
 ## Further refinement roadmap
 - Official Kemenag/SIHAT data validation or a verified reference dataset.
 - Geospatial timezone boundaries/polygon lookup.
-- Exact-alarm permission workflow and audio-focus/silent-mode policy verification.
-- Widget countdown and richer design.
+- Verify exact-alarm access behavior and audio-focus/silent-mode policy on Android 12–16.
+- Widget second-by-second live countdown (currently refreshed snapshot) and richer design.
 - Hijri/Ramadan official Indonesia date source and local adjustment controls.
 - Android 13–16 permission, alarm and widget behavior verification.
