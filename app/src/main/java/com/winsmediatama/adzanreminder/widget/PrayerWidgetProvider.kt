@@ -28,7 +28,7 @@ class PrayerWidgetProvider:AppWidgetProvider(){
   views.setTextViewText(R.id.widget_location,settings.cityName)
   views.setTextViewText(R.id.widget_date,date.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy",Locale("id","ID"))))
   views.setTextViewText(R.id.widget_next,next?.let { "Salat berikutnya: ${it.name} ${PrayerTimeFormatter.format(it.time)} • ${PrayerTimeFormatter.countdown(it.time,now)}" } ?: "Salat berikutnya: --")
-  views.setTextViewText(R.id.widget_prayers,"Subuh ${schedule.fajr?.let{PrayerTimeFormatter.format(it)}}  •  Zuhur ${schedule.dhuhr?.let{PrayerTimeFormatter.format(it)}\nAsar ${schedule.asr?.let{PrayerTimeFormatter.format(it)}}  •  Magrib ${schedule.maghrib?.let{PrayerTimeFormatter.format(it)}\nIsya ${schedule.isha?.let{PrayerTimeFormatter.format(it)}")
+  val prayerText="Subuh ${schedule.fajr?.let{PrayerTimeFormatter.format(it)}?:\"--\"}  •  Zuhur ${schedule.dhuhr?.let{PrayerTimeFormatter.format(it)}?:\"--\"}\nAsar ${schedule.asr?.let{PrayerTimeFormatter.format(it)}?:\"--\"}  •  Magrib ${schedule.maghrib?.let{PrayerTimeFormatter.format(it)}?:\"--\"}\nIsya ${schedule.isha?.let{PrayerTimeFormatter.format(it)}?:\"--\"}"\n  views.setTextViewText(R.id.widget_prayers,prayerText)
   ids.forEach{manager.updateAppWidget(it,views)}
  }
 }
