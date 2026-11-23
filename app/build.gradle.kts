@@ -12,7 +12,7 @@ android {
         applicationId = "com.winsmediatama.adzanreminder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
+        versionCode = 2
         versionName = "1.0.0"
     }
 
@@ -22,16 +22,20 @@ android {
     val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
     val keyAlias = System.getenv("KEY_ALIAS")
     val keyPassword = System.getenv("KEY_PASSWORD")
+    if (!keystorePath.isNullOrBlank() && !keystorePassword.isNullOrBlank() &&
+        !keyAlias.isNullOrBlank() && !keyPassword.isNullOrBlank()) {
+        signingConfigs.create("envRelease") {
+            storeFile = file(keystorePath)
+            storePassword = keystorePassword
+            this.keyAlias = keyAlias
+            this.keyPassword = keyPassword
+        }
+    }
     buildTypes {
         release {
             if (!keystorePath.isNullOrBlank() && !keystorePassword.isNullOrBlank() &&
                 !keyAlias.isNullOrBlank() && !keyPassword.isNullOrBlank()) {
-                signingConfig = signingConfigs.create("envRelease") {
-                    storeFile = file(keystorePath)
-                    storePassword = keystorePassword
-                    this.keyAlias = keyAlias
-                    this.keyPassword = keyPassword
-                }
+                signingConfig = signingConfigs.getByName("envRelease")
             }
         }
     }
