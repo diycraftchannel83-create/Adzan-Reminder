@@ -51,15 +51,31 @@ jobs:
       - name: Run unit tests
         run: gradle --no-daemon testDebugUnitTest
 
+      - name: Configure optional release signing
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release-keystore.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release-keystore.jks" >> "$GITHUB_ENV"
+          echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+
       - name: Build release APK
         run: gradle --no-daemon assembleRelease
 
       - name: Verify release APK
         run: |
-          APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+          APK="app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK" ]; then APK="app/build/outputs/apk/release/app-release-unsigned.apk"; fi
           test -f "$APK"
           test -s "$APK"
           ls -lh "$APK"
+          cp "$APK" app-release-verified.apk
 
       - name: Prepare release metadata
         id: meta
@@ -72,7 +88,7 @@ jobs:
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "apk_name=Adzan-Reminder-${TAG}.apk" >> "$GITHUB_OUTPUT"
-          cp app/build/outputs/apk/release/app-release-unsigned.apk "Adzan-Reminder-${TAG}.apk"
+          cp app-release-verified.apk "Adzan-Reminder-${TAG}.apk"
 
       - name: Publish GitHub Release and upload APK
         uses: softprops/action-gh-release@v2
