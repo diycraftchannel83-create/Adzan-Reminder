@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -99,7 +101,7 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
  val localNow=now.atZone(zone)
  val next=NextPrayerCalculator.findNext(today,tomorrow,localNow)
  val rows=listOf("Subuh" to today.fajr,"Syuruq" to today.sunrise,"Zuhur" to today.dhuhr,"Asar" to today.asr,"Magrib" to today.maghrib,"Isya" to today.isha)
- LaunchedEffect(date,location,config,notifications){
+ LaunchedEffect(date,location,config,notifications,imsakMinutes,adhanAudioEnabled,adhanVolume){
   alarmScheduler.schedule(listOf(today,tomorrow),notifications)
   saveSettings(PrayerSettings(cityName=city.name,latitude=coords.first,longitude=coords.second,zoneId=zone.id,useGps=gpsPoint!=null,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes,adhanAudioEnabled=adhanAudioEnabled,adhanVolume=adhanVolume))
  }
@@ -149,7 +151,7 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
   }
  }
  if(picker)AlertDialog(onDismissRequest={picker=false},title={Text("Pilih kota")},text={LazyColumn(Modifier.heightIn(max=390.dp)){items(cities){c->TextButton(onClick={city=c;gpsPoint=null;zone=ZoneId.of(c.zone);status="Lokasi manual • ${c.zone}";accuracy=null;message=null;saveSettings(PrayerSettings(cityName=c.name,latitude=c.lat,longitude=c.lon,zoneId=c.zone,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes,adhanAudioEnabled=adhanAudioEnabled,adhanVolume=adhanVolume));picker=false},modifier=Modifier.fillMaxWidth()){Text(c.name,modifier=Modifier.fillMaxWidth())}}}},confirmButton={TextButton(onClick={picker=false}){Text("Tutup")}})
- if(settings)AlertDialog(onDismissRequest={settings=false},title={Text("Pengaturan salat")},text={Column(Modifier.heightIn(max=460.dp)){
+ if(settings)AlertDialog(onDismissRequest={settings=false},title={Text("Pengaturan salat")},text={Column(Modifier.heightIn(max=460.dp).verticalScroll(rememberScrollState())){
   Text("Metode perhitungan")
   PrayerMethod.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(method==m,onClick={method=m});Text(m.name.replace('_',' '))}}
   Divider();Text("Asar")
