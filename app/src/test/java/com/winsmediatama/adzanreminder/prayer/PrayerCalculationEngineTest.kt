@@ -27,7 +27,7 @@ class PrayerCalculationEngineTest {
         val hanafi = engine.calculate(date, tasik, PrayerCalculationConfig(asrMadhab = AsrMadhab.HANAFI)).asr
         assertNotNull(shafii)
         assertNotNull(hanafi)
-        assertTrue("Hanafi Asr should occur later than Shafii Asr", hanafi!!.isAfter(shafii))
+        assertTrue("Hanafi Asr should occur later than Shafii Asr", hanafi!!.isAfter(shafii!!))
     }
 
     @Test
@@ -49,7 +49,8 @@ class PrayerCalculationEngineTest {
         val now = date.atTime(23, 0).atZone(tasik.zoneId)
         val next = NextPrayerCalculator.findNext(today, tomorrow, now)
         assertNotNull(next)
-        assertTrue("Next event should be in the future", next!!.time.isAfter(now))
-        assertTrue("After late evening, next prayer should be tomorrow's Subuh", next.name == "Subuh")
+        val upcoming = next ?: error("Expected next prayer to exist")
+        assertTrue("Next event should be in the future", upcoming.time.isAfter(now))
+        assertTrue("After late evening, next prayer should be tomorrow's Subuh", upcoming.name == "Subuh")
     }
 }
