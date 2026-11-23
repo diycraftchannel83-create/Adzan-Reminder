@@ -37,7 +37,7 @@ class AdhanAudioService : Service() {
         val prayer = intent?.getStringExtra(EXTRA_PRAYER) ?: "Zuhur"
         val volume = (intent?.getFloatExtra(EXTRA_VOLUME, 1f) ?: 1f).coerceIn(0f, 1f)
         // Promote immediately to foreground before doing any media preparation.
-        startForeground(notificationId, buildNotification(prayer))
+        startForeground(notificationId, buildNotification(prayer, "Menyiapkan suara adzan..."))
         stopPlayer()
 
         val resourceName = when (prayer.lowercase()) {
@@ -76,6 +76,7 @@ class AdhanAudioService : Service() {
             mp.setOnPreparedListener { media ->
                 Log.i(TAG, "Prepared and starting $resourceName")
                 media.start()
+                getSystemService(NotificationManager::class.java).notify(notificationId, buildNotification(prayer, "Adzan sedang diputar"))
             }
             mp.setOnCompletionListener {
                 Log.i(TAG, "Completed $resourceName")
@@ -124,7 +125,7 @@ class AdhanAudioService : Service() {
         }
     }
 
-    private fun buildNotification(prayer: String): Notification {
+    private fun buildNotification(prayer: String, status: String): Notification {
         val stopIntent = Intent(this, AdhanAudioService::class.java).setAction(ACTION_STOP)
         val stopPending = PendingIntent.getService(
             this, 7103, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -132,7 +133,7 @@ class AdhanAudioService : Service() {
         return NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("Adzan sedang diputar")
-            .setContentText("Suara adzan waktu $prayer")
+            .setContentText("$status • $prayer")
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .addAction(android.R.drawable.ic_media_pause, "Hentikan", stopPending)
