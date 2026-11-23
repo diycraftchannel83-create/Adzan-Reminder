@@ -26,10 +26,9 @@ class PrayerAlarmScheduler(private val context:Context){
     val exactScheduled=if(exactAllowed){
      runCatching{alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,triggerAt,pending)}.isSuccess
     }else false
-    if(!exactScheduled && Build.VERSION.SDK_INT>=23){
-     alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,triggerAt,pending)
-    }else{
-     alarmManager.set(AlarmManager.RTC_WAKEUP,triggerAt,pending)
+    if(!exactScheduled){
+     if(Build.VERSION.SDK_INT>=23)alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,triggerAt,pending)
+     else alarmManager.set(AlarmManager.RTC_WAKEUP,triggerAt,pending)
     }
    }
   }
