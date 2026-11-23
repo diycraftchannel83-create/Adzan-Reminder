@@ -166,7 +166,16 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
   AsrMadhab.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(asr==m,onClick={asr=m});Text(if(m==AsrMadhab.SHAFI)"Syafi'i" else "Hanafi")}}
   Divider()
   Text(if(exactAlarmAllowed)"Alarm tepat waktu: diizinkan" else "Alarm tepat waktu: belum diizinkan",color=if(exactAlarmAllowed)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
-  if(android.os.Build.VERSION.SDK_INT>=31 && !exactAlarmAllowed){OutlinedButton(onClick={exactAlarmAccessLauncher.launch(Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).setData(android.net.Uri.parse("package:${context.packageName}")))},modifier=Modifier.fillMaxWidth()){Text("Izinkan alarm tepat waktu")}}
+  if(android.os.Build.VERSION.SDK_INT>=31 && !exactAlarmAllowed){
+   OutlinedButton(
+    onClick={
+     val alarmPermissionIntent=Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+      .setData(android.net.Uri.parse("package:${context.packageName}"))
+     exactAlarmAccessLauncher.launch(alarmPermissionIntent)
+    },
+    modifier=Modifier.fillMaxWidth()
+   ){Text("Izinkan alarm tepat waktu")}
+  }
   Text("Jika izin tidak diberikan, aplikasi tetap memakai alarm Android yang dapat terlambat karena optimasi baterai.",style=MaterialTheme.typography.bodySmall)
   Divider()
   Text("Zona waktu",style=MaterialTheme.typography.titleSmall)
