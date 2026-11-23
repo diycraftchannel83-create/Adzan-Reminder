@@ -53,4 +53,16 @@ class PrayerCalculationEngineTest {
         assertTrue("Next event should be in the future", upcoming.time.isAfter(now))
         assertTrue("After late evening, next prayer should be tomorrow's Subuh", upcoming.name == "Subuh")
     }
+    @Test
+    fun elevationMovesSunriseEarlierAndMaghribLater() {
+        val seaLevel = engine.calculate(date, tasik.copy(elevationMeters = 0.0))
+        val elevated = engine.calculate(date, tasik.copy(elevationMeters = 1000.0))
+        assertNotNull(seaLevel.sunrise)
+        assertNotNull(elevated.sunrise)
+        assertNotNull(seaLevel.maghrib)
+        assertNotNull(elevated.maghrib)
+        assertTrue("Higher elevation should advance sunrise", elevated.sunrise!!.isBefore(seaLevel.sunrise!!))
+        assertTrue("Higher elevation should delay sunset/Maghrib", elevated.maghrib!!.isAfter(seaLevel.maghrib!!))
+    }
+
 }
