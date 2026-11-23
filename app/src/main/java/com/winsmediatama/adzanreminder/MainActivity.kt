@@ -167,6 +167,15 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
   if(android.os.Build.VERSION.SDK_INT>=31 && !exactAlarmAllowed){OutlinedButton(onClick={exactAlarmAccessLauncher.launch(Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).setData(android.net.Uri.parse("package:${context.packageName}")))},modifier=Modifier.fillMaxWidth()){Text("Izinkan alarm tepat waktu")}}
   Text("Jika izin tidak diberikan, aplikasi tetap memakai alarm Android yang dapat terlambat karena optimasi baterai.",style=MaterialTheme.typography.bodySmall)
   Divider()
+  Text("Zona waktu",style=MaterialTheme.typography.titleSmall)
+  Text("Zona saat ini: ${zone.id}",style=MaterialTheme.typography.bodySmall)
+  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
+   OutlinedButton(onClick={zone=ZoneId.of("Asia/Jakarta")},modifier=Modifier.weight(1f)){Text("WIB")}
+   OutlinedButton(onClick={zone=ZoneId.of("Asia/Makassar")},modifier=Modifier.weight(1f)){Text("WITA")}
+   OutlinedButton(onClick={zone=ZoneId.of("Asia/Jayapura")},modifier=Modifier.weight(1f)){Text("WIT")}
+  }
+  Text("Untuk lokasi GPS di dekat batas zona waktu, pilih zona secara manual bila hasil otomatis kurang tepat.",style=MaterialTheme.typography.bodySmall)
+  Divider()
   Row(verticalAlignment=Alignment.CenterVertically){Checkbox(notifications,onCheckedChange={notifications=it;if(it)requestNotificationPermission()});Text("Aktifkan notifikasi waktu salat")}
   Text("Imsak: ${imsakMinutes} menit sebelum Subuh")
   Slider(value=imsakMinutes.toFloat(),onValueChange={imsakMinutes=it.toInt()},valueRange=0f..30f,steps=29)
