@@ -1,32 +1,36 @@
 # Adzan Reminder — QalbuVision Prayer Engine
 
-Offline-first Android prayer time and adhan reminder app.
+Offline-first Android prayer times and reminder app.
 
-## Implemented in repository
-- Kotlin + Jetpack Compose starter app
-- Prayer models and configurable method/asr settings
-- NOAA-style solar declination/equation-of-time approximation
-- Local calculation engine for Fajr, sunrise, Dhuhr, Asr, Maghrib, Isha
-- Imsak estimate (10 minutes before Fajr; configurable policy still to be added)
-- Timestamp-based countdown utilities
-- Next-prayer calculation supports tomorrow after Isha
-- Fused Location Provider current-location helper
-- Manual-location data model
-- Android CI workflow added, but user requested CI/build not be run at this stage
+## Implemented
+- Android Kotlin + Jetpack Compose scaffold
+- Dark-green prayer dashboard
+- Daily prayer schedule: Fajr, sunrise, Dhuhr, Asr, Maghrib, Isha
+- Live next-prayer countdown computed from target timestamp and current clock
+- Countdown selects tomorrow's schedule after Isha
+- Indonesian date display
+- City selector presets: Tasikmalaya, Jakarta, Bandung, Yogyakarta, Surabaya, Medan, Makassar, Denpasar, Balikpapan, Jayapura, Kuala Lumpur
+- Manual city selection persisted with SharedPreferences
+- Location permission request UI and Fused Location Provider GPS action
+- GPS accuracy display when available
+- Prayer calculation method and Asr madhab selector
+- Kemenag Indonesia configuration as initial default, Shafi'i Asr default
 
-## Accuracy / limitations
-- Calculation engine is an initial approximation and is NOT yet certified or verified to match official Kemenag schedules.
-- Indonesia Kemenag alignment needs reference schedule comparisons and verified ihtiyat rules.
-- GPS helper currently uses device timezone as fallback; coordinate-based timezone lookup is still needed for travel across time zones.
-- Elevation correction is currently approximate.
-- Prayer method and Asr madhab are configurable.
-- Countdown should be derived from absolute timestamps and refreshed in UI, not decremented as a mutable counter.
+## Current accuracy status
+- Local solar calculation is a NOAA-style approximation and is not yet validated against official Kemenag/SIHAT schedules.
+- Kemenag parity is NOT claimed.
+- The current GPS flow uses the selected city/device timezone as a provisional timezone. Coordinate-to-timezone resolution is still needed for users crossing time zones.
+- Elevation and official ihtiyat calibration need validation.
+- Imsak is currently estimated as 10 minutes before Fajr.
+- GPS coordinate mode currently lasts in-memory; persistent GPS coordinate storage is a follow-up task.
 
-## Next steps
-1. Permission-aware location UI and manual city picker.
-2. Coordinate-to-timezone provider with offline/online strategy.
-3. UI dashboard showing location, next prayer, countdown and full daily schedule.
-4. Persist settings and selected location.
-5. Notification/alarm scheduling with Android exact alarm policy.
-6. Official Kemenag reference validation suite across Indonesian cities/dates.
-7. Widget and Ramadan features.
+## Build/CI
+- Android CI workflow exists, but CI/build was intentionally not run per user request.
+
+## Next roadmap
+1. Persist calculation method, madhab, and GPS coordinates.
+2. Coordinate-to-timezone resolver.
+3. Robust permission rationale and denied-permission UX.
+4. Prayer notifications and alarm scheduling.
+5. Official reference validation across Indonesian regions and dates.
+6. Widget, Ramadan/imsak settings, Qibla.
