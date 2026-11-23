@@ -65,4 +65,14 @@ class PrayerCalculationEngineTest {
         assertTrue("Higher elevation should delay sunset/Maghrib", elevated.maghrib!!.isAfter(seaLevel.maghrib!!))
     }
 
+    @Test
+    fun imsakOffsetUsesConfiguredMinutes() {
+        val ten = engine.calculate(date, tasik, PrayerCalculationConfig(imsakMinutes = 10))
+        val fifteen = engine.calculate(date, tasik, PrayerCalculationConfig(imsakMinutes = 15))
+        assertNotNull(ten.imsak)
+        assertNotNull(fifteen.imsak)
+        assertTrue("Configured Imsak offset should affect calculated time", fifteen.imsak!!.isBefore(ten.imsak))
+        assertTrue(java.time.Duration.between(fifteen.imsak, fifteen.fajr).toMinutes() == 15L)
+    }
+
 }
