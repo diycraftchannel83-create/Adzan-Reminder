@@ -22,20 +22,20 @@ class PrayerCalculationEngine {
         }
 
         val fajr = solarEvent(-config.method.fajrAngle, true)
-            ?.plusMinutes(config.fajrAdjustmentMinutes.toLong() - config.ihtiyatMinutes)
+            ?.plusMinutes(config.fajrAdjustmentMinutes.toLong() - config.ihtiyatMinutes.toLong())
         val sunriseAltitude = -0.833 - (0.0347 * sqrt(max(0.0, location.elevationMeters)) / 60.0)
         val sunrise = solarEvent(sunriseAltitude, true)?.plusMinutes(config.sunriseAdjustmentMinutes.toLong())
         val dhuhrUtcMinutes = 720.0 - eq - location.longitude * 4.0
         val dhuhr = utcMinutesToLocal(date, dhuhrUtcMinutes, location.zoneId)
-            ?.plusMinutes(config.dhuhrAdjustmentMinutes.toLong() + config.ihtiyatMinutes)
+            ?.plusMinutes(config.dhuhrAdjustmentMinutes.toLong() + config.ihtiyatMinutes.toLong())
         val asrAltitude = Math.toDegrees(atan(1.0 / (config.asrMadhab.shadowFactor + tan(abs(lat - decl)))))
-        val asr = solarEvent(asrAltitude, false)?.plusMinutes(config.asrAdjustmentMinutes.toLong() + config.ihtiyatMinutes)
-        val maghrib = solarEvent(sunriseAltitude, false)?.plusMinutes(config.maghribAdjustmentMinutes.toLong() + config.ihtiyatMinutes)
+        val asr = solarEvent(asrAltitude, false)?.plusMinutes(config.asrAdjustmentMinutes.toLong() + config.ihtiyatMinutes.toLong())
+        val maghrib = solarEvent(sunriseAltitude, false)?.plusMinutes(config.maghribAdjustmentMinutes.toLong() + config.ihtiyatMinutes.toLong())
         val isha = if (config.method == PrayerMethod.UMM_AL_QURA) {
             maghrib?.plusMinutes(90 + config.ishaAdjustmentMinutes)
         } else {
             solarEvent(-config.method.ishaAngle, false)
-                ?.plusMinutes(config.ishaAdjustmentMinutes.toLong() + config.ihtiyatMinutes)
+                ?.plusMinutes(config.ishaAdjustmentMinutes.toLong() + config.ihtiyatMinutes.toLong())
         }
         val imsak = fajr?.minusMinutes(10)
         return PrayerSchedule(date, location, fajr, sunrise, dhuhr, asr, maghrib, isha, imsak)
@@ -44,6 +44,6 @@ class PrayerCalculationEngine {
     private fun utcMinutesToLocal(date: LocalDate, utcMinutes: Double, zone: ZoneId): ZonedDateTime? {
         if (!utcMinutes.isFinite()) return null
         val seconds = (utcMinutes * 60.0).roundToLong()
-        return date.atStartOfDay(ZoneOffset.UTC).plusSeconds(seconds).atZone(zone)
+        return date.atStartOfDay(ZoneOffset.UTC).plusSeconds(seconds).withZoneSameInstant(zone)
     }
 }
