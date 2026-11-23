@@ -22,9 +22,11 @@ class PrayerAlarmScheduler(private val context:Context){
     val intent=Intent(context,PrayerAlarmReceiver::class.java).putExtra("prayer_name",name).putExtra("prayer_time",time.toString())
     val pending=PendingIntent.getBroadcast(context,requestCode,intent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     val triggerAt=time.toInstant().toEpochMilli()
-    val exactAllowed=Build.VERSION.SDK_INT>=31 && alarmManager.canScheduleExactAlarms()
-    val exactScheduled=if(exactAllowed){
+    val exactAllowed=Build.VERSION.SDK_INT<31 || alarmManager.canScheduleExactAlarms()
+    val exactScheduled=if(exactAllowed && Build.VERSION.SDK_INT>=23){
      runCatching{alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,triggerAt,pending)}.isSuccess
+    }else if(exactAllowed){
+     runCatching{alarmManager.setExact(AlarmManager.RTC_WAKEUP,triggerAt,pending)}.isSuccess
     }else false
     if(!exactScheduled){
      if(Build.VERSION.SDK_INT>=23)alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,triggerAt,pending)
