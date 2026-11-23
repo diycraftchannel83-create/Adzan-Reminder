@@ -23,7 +23,7 @@ class PrayerCalculationEngine {
 
         val fajr = solarEvent(-config.method.fajrAngle, true)
             ?.plusMinutes(config.fajrAdjustmentMinutes.toLong() - config.ihtiyatMinutes.toLong())
-        val sunriseAltitude = -0.833 - (0.0347 * sqrt(max(0.0, location.elevationMeters)) / 60.0)
+        val sunriseAltitude = -0.833 - (0.0347 * sqrt(max(0.0, location.elevationMeters)))
         val sunrise = solarEvent(sunriseAltitude, true)?.plusMinutes(config.sunriseAdjustmentMinutes.toLong())
         val dhuhrUtcMinutes = 720.0 - eq - location.longitude * 4.0
         val dhuhr = utcMinutesToLocal(date, dhuhrUtcMinutes, location.zoneId)
