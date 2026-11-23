@@ -31,6 +31,9 @@ class PrayerAlarmReceiver:BroadcastReceiver(){
   manager.notify(name.hashCode(),notification)
 
   val settings=PrayerPreferences(context).read()
+  val widgetManager=android.appwidget.AppWidgetManager.getInstance(context)
+  val widgetIds=widgetManager.getAppWidgetIds(android.content.ComponentName(context,com.winsmediatama.adzanreminder.widget.PrayerWidgetProvider::class.java))
+  if(widgetIds.isNotEmpty())com.winsmediatama.adzanreminder.widget.PrayerWidgetProvider().onUpdate(context,widgetManager,widgetIds)
   if(settings.adhanAudioEnabled){
    val audioIntent=Intent(context,AdhanAudioService::class.java)
     .putExtra(AdhanAudioService.EXTRA_PRAYER,name)
