@@ -23,8 +23,5 @@ class PrayerBootReceiver:BroadcastReceiver(){
   val engine=PrayerCalculationEngine()
   val today=LocalDate.now(zone)
   PrayerAlarmScheduler(context).schedule(listOf(engine.calculate(today,location,config),engine.calculate(today.plusDays(1),location,config)),true)
-  val widgetManager=android.appwidget.AppWidgetManager.getInstance(context)
-  val widgetIds=widgetManager.getAppWidgetIds(android.content.ComponentName(context,com.winsmediatama.adzanreminder.widget.PrayerWidgetProvider::class.java))
-  if(widgetIds.isNotEmpty())com.winsmediatama.adzanreminder.widget.PrayerWidgetProvider().onUpdate(context,widgetManager,widgetIds)
  }
 }
