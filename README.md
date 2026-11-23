@@ -22,7 +22,7 @@ Offline-first Android prayer schedule and reminder foundation.
 ### 8: Prayer notifications
 - Android notification channel and prayer notifications.
 - Runtime POST_NOTIFICATIONS permission request when reminders are enabled (Android 13+).
-- AlarmManager setAndAllowWhileIdle schedules reminders; exact delivery is not guaranteed under Android battery policies.
+- AlarmManager uses exact alarms when special access is granted; otherwise falls back to inexact `setAndAllowWhileIdle()` delivery. Battery and OS policy can still affect delivery.
 - Two-day rolling schedule refreshed after delivered prayer notifications, app schedule changes, device reboot, date/time/timezone changes, and app replacement.
 
 ### 9: Bundled offline Adhan audio
@@ -60,7 +60,7 @@ Offline-first Android prayer schedule and reminder foundation.
 - Solar events use a NOAA-style approximation; sanity unit tests cover event ordering, but results still need comparison against official schedules across many dates and locations.
 - Kemenag parity is not verified.
 - Imsak is an adjustable convenience offset, not a separate astronomical event.
-- GPS elevation is not currently incorporated.
+- GPS elevation is not currently obtained; the engine accepts elevation input and applies a corrected sunrise/Maghrib horizon adjustment when elevation is supplied.
 - Coordinate timezone lookup is approximate in Indonesia and fallback elsewhere.
 - AlarmManager uses inexact `setAndAllowWhileIdle()` delivery and is subject to Android power management. Alarm schedules are now refreshed after boot, date/time/timezone changes, and app replacement.
 - Notification permission must be granted by the user.
