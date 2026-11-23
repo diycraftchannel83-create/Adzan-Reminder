@@ -1,48 +1,124 @@
 package com.winsmediatama.adzanreminder
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.winsmediatama.adzanreminder.location.PrayerLocationManager
+import com.winsmediatama.adzanreminder.prayer.*
+import java.time.*
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    WelcomeScreen()
-                }
-            }
-        }
-    }
+private data class City(val name:String,val lat:Double,val lon:Double,val zone:String)
+private val cities=listOf(
+ City("Tasikmalaya",-7.3274,108.2207,"Asia/Jakarta"),City("Jakarta",-6.2088,106.8456,"Asia/Jakarta"),
+ City("Bandung",-6.9175,107.6191,"Asia/Jakarta"),City("Yogyakarta",-7.7956,110.3695,"Asia/Jakarta"),
+ City("Surabaya",-7.2575,112.7521,"Asia/Jakarta"),City("Medan",3.5952,98.6722,"Asia/Jakarta"),
+ City("Makassar",-5.1477,119.4327,"Asia/Makassar"),City("Denpasar",-8.6705,115.2126,"Asia/Makassar"),
+ City("Balikpapan",-1.2379,116.8529,"Asia/Makassar"),City("Jayapura",-2.5916,140.6690,"Asia/Jayapura"),
+ City("Kuala Lumpur",3.1390,101.6869,"Asia/Kuala_Lumpur")
+)
+
+class MainActivity:ComponentActivity(){
+ override fun onCreate(savedInstanceState:Bundle?){
+  super.onCreate(savedInstanceState)
+  val prefs=getSharedPreferences("adzan_reminder",Context.MODE_PRIVATE)
+  val start=cities.firstOrNull{it.name==prefs.getString("city","Tasikmalaya")}?:cities.first()
+  val locationManager=PrayerLocationManager(this)
+  setContent {
+   val permissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){}
+   MaterialTheme(colorScheme=darkColorScheme(primary=Color(0xFF6EE7B7),secondary=Color(0xFFD6B56D),background=Color(0xFF071B16),surface=Color(0xFF102820),onPrimary=Color(0xFF062018),onBackground=Color(0xFFE8F5EE),onSurface=Color(0xFFE8F5EE))){
+    Dashboard(start,locationManager,
+     saveCity={prefs.edit().putString("city",it.name).apply()},
+     requestPermission={permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION))},
+     hasPermission={ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED})
+   }
+  }
+ }
 }
 
 @Composable
-private fun WelcomeScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Adzan Reminder", style = MaterialTheme.typography.headlineLarge)
-        Text("Prayer Engine foundation", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "Offline-first prayer times, location-aware schedule, and reliable countdown.",
-            modifier = Modifier.padding(top = 16.dp),
-            style = MaterialTheme.typography.bodyLarge
-        )
+private fun Dashboard(initial:City,locationManager:PrayerLocationManager,saveCity:(City)->Unit,requestPermission:()->Unit,hasPermission:()->Boolean){
+ var city by remember{mutableStateOf(initial)}
+ var gpsPoint by remember{mutableStateOf<Pair<Double,Double>?>(null)}
+ var picker by remember{mutableStateOf(false)}
+ var settings by remember{mutableStateOf(false)}
+ var status by remember{mutableStateOf("Lokasi manual • ${initial.zone}")}
+ var accuracy by remember{mutableStateOf<String?>(null)}
+ var message by remember{mutableStateOf<String?>(null)}
+ var method by remember{mutableStateOf(PrayerMethod.KEMENAG_INDONESIA)}
+ var asr by remember{mutableStateOf(AsrMadhab.SHAFI)}
+ var now by remember{mutableStateOf(Instant.now())}
+ LaunchedEffect(Unit){while(true){now=Instant.now();kotlinx.coroutines.delay(1000)}}
+ val zone=ZoneId.of(city.zone)
+ val date=now.atZone(zone).toLocalDate()
+ val coords=gpsPoint?: (city.lat to city.lon)
+ val location=PrayerLocation(coords.first,coords.second,0.0,zone,city.name)
+ val config=PrayerCalculationConfig(method=method,asrMadhab=asr)
+ val engine=remember{PrayerCalculationEngine()}
+ val today=remember(date,location,config){engine.calculate(date,location,config)}
+ val tomorrow=remember(date,location,config){engine.calculate(date.plusDays(1),location,config)}
+ val localNow=now.atZone(zone)
+ val next=NextPrayerCalculator.findNext(today,tomorrow,localNow)
+ val rows=listOf("Subuh" to today.fajr,"Syuruq" to today.sunrise,"Zuhur" to today.dhuhr,"Asar" to today.asr,"Magrib" to today.maghrib,"Isya" to today.isha)
+ Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)){
+  Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween){
+   Column{Text("ADZAN REMINDER",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelLarge);Text("Waktu Salat",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)}
+   TextButton(onClick={settings=true}){Text("Pengaturan")}
+  }
+  Card(Modifier.fillMaxWidth().padding(top=12.dp),shape=RoundedCornerShape(22.dp)){
+   Column(Modifier.padding(18.dp)){
+    Row(verticalAlignment=Alignment.CenterVertically){
+     Column(Modifier.weight(1f)){Text(if(gpsPoint!=null)"Lokasi GPS" else city.name,style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold);Text(status,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.secondary);accuracy?.let{Text(it,style=MaterialTheme.typography.labelSmall)}}
+     TextButton(onClick={picker=true}){Text("Kota")}
     }
+    Text(date.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy",Locale("id","ID"))),modifier=Modifier.padding(top=8.dp))
+    Text("Salat berikutnya",modifier=Modifier.padding(top=16.dp),color=MaterialTheme.colorScheme.secondary)
+    Text(next?.name?: "—",style=MaterialTheme.typography.headlineLarge,fontWeight=FontWeight.Bold)
+    Text(next?.let{PrayerTimeFormatter.format(it.time)}?:"--:--",style=MaterialTheme.typography.titleLarge)
+    Text(next?.let{PrayerTimeFormatter.countdown(it.time,localNow)}?:"--:--:--",modifier=Modifier.padding(top=6.dp),style=MaterialTheme.typography.displaySmall,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.Bold)
+    Text("HH : MM : SS menuju waktu salat",style=MaterialTheme.typography.labelMedium)
+    Button(onClick={
+     if(!hasPermission())requestPermission()
+     else locationManager.requestCurrentLocation{loc->
+      if(loc!=null){gpsPoint=loc.latitude to loc.longitude;status="GPS aktif • zona waktu perangkat (${zone.id})";accuracy=loc.accuracyMeters?.let{"Akurasi GPS ±${it.toInt()} m"};message="Koordinat GPS diperbarui. Jika lintas zona waktu, pilih kota/zona yang sesuai."}
+      else message="Lokasi gagal diperoleh; periksa GPS atau gunakan pemilihan kota."
+     }
+    },modifier=Modifier.fillMaxWidth().padding(top=10.dp)){Text("Ambil lokasi GPS")}
+    message?.let{Text(it,modifier=Modifier.padding(top=6.dp),style=MaterialTheme.typography.bodySmall)}
+   }
+  }
+  Text("Jadwal hari ini",modifier=Modifier.padding(top=16.dp,bottom=8.dp),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)
+  LazyColumn(verticalArrangement=Arrangement.spacedBy(6.dp)){
+   items(rows){(name,time)->
+    Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(13.dp),colors=CardDefaults.cardColors(containerColor=if(next?.name==name)Color(0xFF174D39) else MaterialTheme.colorScheme.surface)){
+     Row(Modifier.fillMaxWidth().padding(14.dp),verticalAlignment=Alignment.CenterVertically){Text(name,modifier=Modifier.weight(1f),fontWeight=if(next?.name==name)FontWeight.Bold else FontWeight.Normal);Text(PrayerTimeFormatter.format(time),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)}
+    }
+   }
+  }
+ }
+ if(picker)AlertDialog(onDismissRequest={picker=false},title={Text("Pilih kota")},text={LazyColumn(Modifier.heightIn(max=390.dp)){items(cities){c->TextButton(onClick={city=c;gpsPoint=null;status="Lokasi manual • ${c.zone}";accuracy=null;message=null;saveCity(c);picker=false},modifier=Modifier.fillMaxWidth()){Text(c.name,modifier=Modifier.fillMaxWidth())}}}},confirmButton={TextButton(onClick={picker=false}){Text("Tutup")}})
+ if(settings)AlertDialog(onDismissRequest={settings=false},title={Text("Metode waktu salat")},text={Column{
+  Text("Metode perhitungan")
+  PrayerMethod.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(method==m,onClick={method=m});Text(m.name.replace('_',' '))}}
+  Divider();Text("Asar")
+  AsrMadhab.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(asr==m,onClick={asr=m});Text(if(m==AsrMadhab.SHAFI)"Syafi'i" else "Hanafi")}}
+ }},confirmButton={TextButton(onClick={settings=false}){Text("Selesai")}})
 }
