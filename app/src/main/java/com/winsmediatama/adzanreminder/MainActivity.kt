@@ -103,7 +103,7 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
   alarmScheduler.schedule(listOf(today,tomorrow),notifications)
   saveSettings(PrayerSettings(cityName=city.name,latitude=coords.first,longitude=coords.second,zoneId=zone.id,useGps=gpsPoint!=null,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes,adhanAudioEnabled=adhanAudioEnabled,adhanVolume=adhanVolume))
  }
- Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)){
+ Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding().padding(16.dp)){
   Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween){
    Column{Text("ADZAN REMINDER",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelLarge);Text("Waktu Salat",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)}
    TextButton(onClick={settings=true}){Text("Pengaturan")}
@@ -140,7 +140,7 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
    OutlinedButton(onClick={settings=true},modifier=Modifier.weight(1f)){Text(if(notifications)"Notifikasi ON" else "Notifikasi OFF")}
   }
   Text("Jadwal hari ini",modifier=Modifier.padding(top=16.dp,bottom=8.dp),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)
-  LazyColumn(verticalArrangement=Arrangement.spacedBy(6.dp)){
+  LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(6.dp)){
    items(rows){(name,time)->
     Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(13.dp),colors=CardDefaults.cardColors(containerColor=if(next?.name==name)Color(0xFF174D39) else MaterialTheme.colorScheme.surface)){
      Row(Modifier.fillMaxWidth().padding(14.dp),verticalAlignment=Alignment.CenterVertically){Text(name,modifier=Modifier.weight(1f),fontWeight=if(next?.name==name)FontWeight.Bold else FontWeight.Normal);Text(PrayerTimeFormatter.format(time),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)}
