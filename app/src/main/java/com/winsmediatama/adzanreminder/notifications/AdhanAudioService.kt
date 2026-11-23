@@ -56,7 +56,11 @@ class AdhanAudioService : Service() {
         }
 
         try {
-            requestAudioFocus()
+            if (!requestAudioFocus()) {
+                Log.e(TAG, "Audio focus denied; aborting playback")
+                stopAudio()
+                return START_NOT_STICKY
+            }
             val mp = MediaPlayer()
             player = mp
             mp.setAudioAttributes(
@@ -90,7 +94,7 @@ class AdhanAudioService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun requestAudioFocus() {
+    private fun requestAudioFocus(): Boolean {
         if (Build.VERSION.SDK_INT >= 26) {
             val attrs = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ALARM)
@@ -103,10 +107,10 @@ class AdhanAudioService : Service() {
                 }
                 .build()
             focusRequest = request
-            audioManager.requestAudioFocus(request)
+            return audioManager.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         } else {
             @Suppress("DEPRECATION")
-            audioManager.requestAudioFocus(null, AudioManager.STREAM_ALARM, AudioManager.AUDIOFOCUS_GAIN)
+            return audioManager.requestAudioFocus(null, AudioManager.STREAM_ALARM, AudioManager.AUDIOFOCUS_GAIN) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         }
     }
 
@@ -154,7 +158,12 @@ class AdhanAudioService : Service() {
     private fun stopAudio() {
         stopPlayer()
         abandonAudioFocus()
-        if (Build.VERSION.SDK_INT >= 24) stopForeground(STOP_FOREGROUND_REMOVE) else @Suppress("DEPRECATION") stopForeground(true)
+        if (Build.VERSION.SDK_INT >= 24) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         stopSelf()
     }
 
