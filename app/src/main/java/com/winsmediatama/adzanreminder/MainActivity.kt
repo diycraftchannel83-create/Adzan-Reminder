@@ -170,9 +170,9 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
   Text("Zona waktu",style=MaterialTheme.typography.titleSmall)
   Text("Zona saat ini: ${zone.id}",style=MaterialTheme.typography.bodySmall)
   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
-   OutlinedButton(onClick={zone=ZoneId.of("Asia/Jakarta")},modifier=Modifier.weight(1f)){Text("WIB")}
-   OutlinedButton(onClick={zone=ZoneId.of("Asia/Makassar")},modifier=Modifier.weight(1f)){Text("WITA")}
-   OutlinedButton(onClick={zone=ZoneId.of("Asia/Jayapura")},modifier=Modifier.weight(1f)){Text("WIT")}
+   OutlinedButton(onClick={zone=ZoneId.of("Asia/Jakarta");status=if(gpsPoint!=null)"GPS • Zona manual WIB" else "Lokasi manual • WIB"},modifier=Modifier.weight(1f)){Text("WIB")}
+   OutlinedButton(onClick={zone=ZoneId.of("Asia/Makassar");status=if(gpsPoint!=null)"GPS • Zona manual WITA" else "Lokasi manual • WITA"},modifier=Modifier.weight(1f)){Text("WITA")}
+   OutlinedButton(onClick={zone=ZoneId.of("Asia/Jayapura");status=if(gpsPoint!=null)"GPS • Zona manual WIT" else "Lokasi manual • WIT"},modifier=Modifier.weight(1f)){Text("WIT")}
   }
   Text("Untuk lokasi GPS di dekat batas zona waktu, pilih zona secara manual bila hasil otomatis kurang tepat.",style=MaterialTheme.typography.bodySmall)
   Divider()
