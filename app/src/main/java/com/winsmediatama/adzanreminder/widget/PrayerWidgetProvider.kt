@@ -33,7 +33,7 @@ class PrayerWidgetProvider:AppWidgetProvider(){
   val asrText=schedule.asr?.let{PrayerTimeFormatter.format(it)} ?: "--"
   val maghribText=schedule.maghrib?.let{PrayerTimeFormatter.format(it)} ?: "--"
   val ishaText=schedule.isha?.let{PrayerTimeFormatter.format(it)} ?: "--"
-  val prayerText="Subuh $fajrText  •  Zuhur $dhuhrText\\nAsar $asrText  •  Magrib $maghribText\\nIsya $ishaText"
+  val prayerText="Subuh $fajrText  •  Zuhur $dhuhrText\nAsar $asrText  •  Magrib $maghribText\nIsya $ishaText"
   views.setTextViewText(R.id.widget_prayers,prayerText)
   ids.forEach{manager.updateAppWidget(it,views)}
  }
