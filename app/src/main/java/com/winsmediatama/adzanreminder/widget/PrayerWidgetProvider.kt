@@ -3,6 +3,8 @@ package com.winsmediatama.adzanreminder.widget
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
+import android.app.PendingIntent
 import android.widget.RemoteViews
 import com.winsmediatama.adzanreminder.R
 import com.winsmediatama.adzanreminder.data.PrayerPreferences
@@ -25,6 +27,11 @@ class PrayerWidgetProvider:AppWidgetProvider(){
   val now=java.time.ZonedDateTime.now(zone)
   val next=NextPrayerCalculator.findNext(schedule,tomorrow,now)
   val views=RemoteViews(context.packageName,R.layout.prayer_widget)
+  val openApp=PendingIntent.getActivity(context,0,Intent(context,com.winsmediatama.adzanreminder.MainActivity::class.java),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+  views.setOnClickPendingIntent(R.id.widget_location,openApp)
+  views.setOnClickPendingIntent(R.id.widget_date,openApp)
+  views.setOnClickPendingIntent(R.id.widget_next,openApp)
+  views.setOnClickPendingIntent(R.id.widget_prayers,openApp)
   views.setTextViewText(R.id.widget_location,settings.cityName)
   views.setTextViewText(R.id.widget_date,date.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy",Locale("id","ID"))))
   views.setTextViewText(R.id.widget_next,next?.let { "Salat berikutnya: ${it.name} ${PrayerTimeFormatter.format(it.time)} • ${PrayerTimeFormatter.countdown(it.time,now)}" } ?: "Salat berikutnya: --")
