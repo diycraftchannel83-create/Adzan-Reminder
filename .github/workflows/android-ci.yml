@@ -18,6 +18,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
+      - name: Download bundled Adhan MP3 assets
+        run: |
+          mkdir -p app/src/main/res/raw
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_fajr.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_01_Fajr_Adhan.mp3"
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_dhuhr.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_02_Dhuhr_Adhan.mp3"
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_asr.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_03_Asr_Adhan.mp3"
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_maghrib.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_04_Maghrib_Adhan.mp3"
+          curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_isha.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_05_Isha_Adhan.mp3"
+          ls -lh app/src/main/res/raw/
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
       - name: Verify APK exists
