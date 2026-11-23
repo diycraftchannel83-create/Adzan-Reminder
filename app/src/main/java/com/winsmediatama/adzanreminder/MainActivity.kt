@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
@@ -165,4 +166,5 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
    Spacer(Modifier.height(8.dp))
    Text("Tanggal berdasarkan kalender Hijriah perangkat dan dapat berbeda dari keputusan rukyat/otoritas resmi Indonesia.")
   }},confirmButton={TextButton(onClick={ramadanPanel=false}){Text("Tutup")}})
+}
 }
