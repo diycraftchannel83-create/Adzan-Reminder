@@ -21,11 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import com.winsmediatama.adzanreminder.data.PrayerPreferences
 import com.winsmediatama.adzanreminder.data.PrayerSettings
 import com.winsmediatama.adzanreminder.location.CoordinateTimeZoneResolver
 import com.winsmediatama.adzanreminder.location.PrayerLocationManager
 import com.winsmediatama.adzanreminder.notifications.PrayerAlarmScheduler
+import com.winsmediatama.adzanreminder.notifications.AdhanAudioService
 import com.winsmediatama.adzanreminder.prayer.*
 import com.winsmediatama.adzanreminder.ramadan.RamadanInfo
 import java.time.*
@@ -81,6 +83,9 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
  var asr by remember{mutableStateOf(runCatching{AsrMadhab.valueOf(initialSettings.asrMadhab)}.getOrDefault(AsrMadhab.SHAFI))}
  var notifications by remember{mutableStateOf(initialSettings.notificationsEnabled)}
  var imsakMinutes by remember{mutableIntStateOf(initialSettings.imsakMinutes)}
+ var adhanAudioEnabled by remember{mutableStateOf(initialSettings.adhanAudioEnabled)}
+ var adhanVolume by remember{mutableFloatStateOf(initialSettings.adhanVolume)}
+ val context=LocalContext.current
  var now by remember{mutableStateOf(Instant.now())}
  LaunchedEffect(Unit){while(true){now=Instant.now();kotlinx.coroutines.delay(1000)}}
  val date=now.atZone(zone).toLocalDate()
@@ -95,7 +100,7 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
  val rows=listOf("Subuh" to today.fajr,"Syuruq" to today.sunrise,"Zuhur" to today.dhuhr,"Asar" to today.asr,"Magrib" to today.maghrib,"Isya" to today.isha)
  LaunchedEffect(date,location,config,notifications){
   alarmScheduler.schedule(listOf(today,tomorrow),notifications)
-  saveSettings(PrayerSettings(cityName=city.name,latitude=coords.first,longitude=coords.second,zoneId=zone.id,useGps=gpsPoint!=null,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes))
+  saveSettings(PrayerSettings(cityName=city.name,latitude=coords.first,longitude=coords.second,zoneId=zone.id,useGps=gpsPoint!=null,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes,adhanAudioEnabled=adhanAudioEnabled,adhanVolume=adhanVolume))
  }
  Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)){
   Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween){
@@ -142,7 +147,7 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
    }
   }
  }
- if(picker)AlertDialog(onDismissRequest={picker=false},title={Text("Pilih kota")},text={LazyColumn(Modifier.heightIn(max=390.dp)){items(cities){c->TextButton(onClick={city=c;gpsPoint=null;zone=ZoneId.of(c.zone);status="Lokasi manual • ${c.zone}";accuracy=null;message=null;saveSettings(PrayerSettings(cityName=c.name,latitude=c.lat,longitude=c.lon,zoneId=c.zone,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes));picker=false},modifier=Modifier.fillMaxWidth()){Text(c.name,modifier=Modifier.fillMaxWidth())}}}},confirmButton={TextButton(onClick={picker=false}){Text("Tutup")}})
+ if(picker)AlertDialog(onDismissRequest={picker=false},title={Text("Pilih kota")},text={LazyColumn(Modifier.heightIn(max=390.dp)){items(cities){c->TextButton(onClick={city=c;gpsPoint=null;zone=ZoneId.of(c.zone);status="Lokasi manual • ${c.zone}";accuracy=null;message=null;saveSettings(PrayerSettings(cityName=c.name,latitude=c.lat,longitude=c.lon,zoneId=c.zone,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes,adhanAudioEnabled=adhanAudioEnabled,adhanVolume=adhanVolume));picker=false},modifier=Modifier.fillMaxWidth()){Text(c.name,modifier=Modifier.fillMaxWidth())}}}},confirmButton={TextButton(onClick={picker=false}){Text("Tutup")}})
  if(settings)AlertDialog(onDismissRequest={settings=false},title={Text("Pengaturan salat")},text={Column(Modifier.heightIn(max=460.dp)){
   Text("Metode perhitungan")
   PrayerMethod.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(method==m,onClick={method=m});Text(m.name.replace('_',' '))}}
@@ -152,6 +157,15 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
   Row(verticalAlignment=Alignment.CenterVertically){Checkbox(notifications,onCheckedChange={notifications=it;if(it)requestNotificationPermission()});Text("Aktifkan notifikasi waktu salat")}
   Text("Imsak: ${imsakMinutes} menit sebelum Subuh")
   Slider(value=imsakMinutes.toFloat(),onValueChange={imsakMinutes=it.toInt()},valueRange=0f..30f,steps=29)
+  Divider()
+  Row(verticalAlignment=Alignment.CenterVertically){Checkbox(adhanAudioEnabled,onCheckedChange={adhanAudioEnabled=it});Text("Putar suara adzan otomatis")}
+  Text("Volume adzan: ${(adhanVolume*100).toInt()}%")
+  Slider(value=adhanVolume,onValueChange={adhanVolume=it},valueRange=0f..1f)
+  OutlinedButton(onClick={
+   val preview=Intent(context,AdhanAudioService::class.java).putExtra(AdhanAudioService.EXTRA_PRAYER,"Zuhur").putExtra(AdhanAudioService.EXTRA_VOLUME,adhanVolume)
+   if(android.os.Build.VERSION.SDK_INT>=26)context.startForegroundService(preview) else context.startService(preview)
+  },modifier=Modifier.fillMaxWidth()){Text("▶ Tes suara adzan")}
+  Text("Audio adzan tersedia offline dan berjalan dari file yang dibundel dalam APK.",style=MaterialTheme.typography.bodySmall)
   Text("Pengaturan disimpan otomatis.")
  }},confirmButton={TextButton(onClick={settings=false}){Text("Selesai")}})
  if(ramadanPanel){
