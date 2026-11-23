@@ -99,7 +99,7 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
  val date=now.atZone(zone).toLocalDate()
  val coords=gpsPoint?: (city.lat to city.lon)
  val location=PrayerLocation(coords.first,coords.second,0.0,zone,city.name)
- val config=PrayerCalculationConfig(method=method,asrMadhab=asr)
+ val config=PrayerCalculationConfig(method=method,asrMadhab=asr,imsakMinutes=imsakMinutes)
  val engine=remember{PrayerCalculationEngine()}
  val today=remember(date,location,config){engine.calculate(date,location,config)}
  val tomorrow=remember(date,location,config){engine.calculate(date.plusDays(1),location,config)}
