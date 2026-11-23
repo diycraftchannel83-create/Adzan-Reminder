@@ -17,12 +17,13 @@ Offline-first Android prayer schedule and reminder foundation.
 
 ### 7: Timezone resolver
 - Coarse offline Indonesia resolver maps longitude bands to WIB/WITA/WIT zones.
-- IMPORTANT: this is a longitude-band approximation, not polygon/administrative timezone lookup. Locations near zone borders must be checked. Outside Indonesia falls back to device timezone.
+- Settings now include manual WIB/WITA/WIT override for GPS edge cases.
+- IMPORTANT: automatic resolution remains a longitude-band approximation, not polygon/administrative timezone lookup. Locations near zone borders must be checked. Outside Indonesia falls back to device timezone.
 
 ### 8: Prayer notifications
 - Android notification channel and prayer notifications.
 - Runtime POST_NOTIFICATIONS permission request when reminders are enabled (Android 13+).
-- AlarmManager uses exact alarms when special access is granted; otherwise falls back to inexact `setAndAllowWhileIdle()` delivery. Battery and OS policy can still affect delivery.
+- AlarmManager uses exact scheduling on Android 6–11 without special access, and Android 12+ when special access is granted; otherwise it falls back to inexact `setAndAllowWhileIdle()` delivery. Battery and OS policy can still affect delivery.
 - Two-day rolling schedule refreshed after delivered prayer notifications, app schedule changes, device reboot, date/time/timezone changes, and app replacement.
 
 ### 9: Bundled offline Adhan audio
@@ -50,7 +51,7 @@ Offline-first Android prayer schedule and reminder foundation.
 
 ## QA and audit status
 
-- Audit patches applied: settings dialog scrolling, persistence keys for audio/volume/imsak, GPS label persistence, audio-focus denial handling, system date/time/timezone/app-update alarm rescheduling, and elevation correction for sunrise/Maghrib.
+- Audit patches applied: settings dialog scrolling, persistence keys for audio/volume/imsak, GPS label persistence, audio-focus denial handling, system date/time/timezone/app-update alarm rescheduling, elevation correction for sunrise/Maghrib, manual WIB/WITA/WIT override, and exact alarms on supported API levels.
 - Unit tests added for prayer-event chronology, Asr madhab ordering, method differences, next-prayer rollover, and Indonesia timezone resolver boundaries.
 - CI validates all five downloaded MP3 files for count, size, and basic MP3 signature, then runs unit tests before building.
 - Optional exact alarm access is requested from settings; if unavailable, scheduler falls back to Android inexact alarms.
