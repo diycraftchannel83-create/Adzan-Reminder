@@ -27,6 +27,19 @@ jobs:
           curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_maghrib.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_04_Maghrib_Adhan.mp3"
           curl -L --fail --retry 3 -o app/src/main/res/raw/adhan_isha.mp3 "https://archive.org/download/adhan.recordings.from.doha.qatar/Adhan_Doha_Qatar_05_Isha_Adhan.mp3"
           ls -lh app/src/main/res/raw/
+          python3 - <<'PY'
+          from pathlib import Path
+          files = list(Path("app/src/main/res/raw").glob("adhan_*.mp3"))
+          assert len(files) == 5, f"Expected 5 adhan files, got {len(files)}"
+          for p in files:
+              data = p.read_bytes()
+              assert len(data) > 50_000, f"{p.name}: file too small or download failed"
+              valid = data[:3] == b"ID3" or (len(data) > 1 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0)
+              assert valid, f"{p.name}: invalid MP3 signature"
+              print(f"Validated {p.name}: {len(data)} bytes")
+          PY
+      - name: Run unit tests
+        run: gradle --no-daemon testDebugUnitTest
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
       - name: Verify APK exists
