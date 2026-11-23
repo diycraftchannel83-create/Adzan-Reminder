@@ -104,7 +104,7 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
  val localNow=now.atZone(zone)
  val next=NextPrayerCalculator.findNext(today,tomorrow,localNow)
  val rows=listOf("Subuh" to today.fajr,"Syuruq" to today.sunrise,"Zuhur" to today.dhuhr,"Asar" to today.asr,"Magrib" to today.maghrib,"Isya" to today.isha)
- LaunchedEffect(date,location,config,notifications,imsakMinutes,adhanAudioEnabled,adhanVolume){
+ LaunchedEffect(date,location,config,notifications,imsakMinutes,adhanAudioEnabled,adhanVolume,exactAlarmAllowed){
   alarmScheduler.schedule(listOf(today,tomorrow),notifications)
   saveSettings(PrayerSettings(cityName=if(gpsPoint!=null)"Lokasi GPS" else city.name,latitude=coords.first,longitude=coords.second,zoneId=zone.id,useGps=gpsPoint!=null,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes,adhanAudioEnabled=adhanAudioEnabled,adhanVolume=adhanVolume))
   val widgetManager=android.appwidget.AppWidgetManager.getInstance(context)
