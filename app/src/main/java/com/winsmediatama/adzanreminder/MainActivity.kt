@@ -154,10 +154,10 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
  if(ramadanPanel){
   val info=RamadanInfo.forDate(date,null,today,imsakMinutes)
   AlertDialog(onDismissRequest={ramadanPanel=false},title={Text("Ramadan & Imsak")},text={Column{
-   Text("Imsak hari ini: ${info.imsakTime?: "--"}")
+   Text("Ramadan diperkirakan mulai: ${info.ramadanStart}")\n   info.dayNumber?.let{Text("Hari Ramadan ke-$it")}\n   info.daysUntilRamadan?.let{Text("Perkiraan ${it} hari menuju Ramadan")}\n   Text("Imsak hari ini: ${info.imsakTime?: "--"}")
    Text("Buka puasa / Magrib: ${info.iftarTime?: "--"}")
    Text("Pengaturan imsak: ${imsakMinutes} menit sebelum Subuh")
    Spacer(Modifier.height(8.dp))
-   Text("Tanggal Ramadan dan hitung mundur Ramadan memerlukan kalender Hijriah resmi yang akan ditambahkan setelah validasi data.")
+   Text("Tanggal berdasarkan kalender Hijriah perangkat dan dapat berbeda dari keputusan rukyat/otoritas resmi Indonesia.")
   }},confirmButton={TextButton(onClick={ramadanPanel=false}){Text("Tutup")}})
 }
