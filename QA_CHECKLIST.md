@@ -1,6 +1,20 @@
 # Adzan Reminder QA Checklist
 
-## Build verification (deferred by request)
+## Build verification
+- [ ] CI runs unit tests, Android lint, Debug build and APK artifact upload.
+- [ ] Release workflow builds Release APK; signing is enabled only when GitHub secrets are configured.
+- [ ] Verify versionCode increases for every Play Store update.
+- [ ] Verify APK signature with `apksigner verify --verbose --print-certs` when signed.
+- [ ] Keep keystore out of the repository; configure secrets `ANDROID_KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
+
+## Privacy and permission review
+- [ ] Location permission is optional; manual city selection remains usable without GPS.
+- [ ] Local settings include location coordinates; app backup is disabled to avoid backing up these preferences.
+- [ ] Publish privacy policy explaining location use, notifications, audio, storage and retention.
+- [ ] Review Play Console Data Safety and exact alarm permission declaration.
+- [ ] No account, analytics, advertising or network collection should be claimed unless later added.
+
+## Production release verification
 - [ ] Run GitHub Actions workflow manually after patch review.
 - [ ] Verify downloaded MP3 files pass size and signature validation.
 - [ ] Run `testDebugUnitTest`.
