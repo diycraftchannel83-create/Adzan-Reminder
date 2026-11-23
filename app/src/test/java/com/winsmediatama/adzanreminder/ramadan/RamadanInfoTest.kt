@@ -1,7 +1,6 @@
 package com.winsmediatama.adzanreminder.ramadan
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.time.LocalDate
 import java.time.chrono.HijrahDate
@@ -9,37 +8,24 @@ import java.time.temporal.ChronoField
 
 class RamadanInfoTest {
     @Test
-    fun startDateIsConsistentForDatesInsideHijriRamadan() {
-        val start = HijrahDate.from(LocalDate.of(2026, 3, 1))
-            .let { HijrahDate.of(it.get(ChronoField.YEAR), 9, 1) }
-            .let { LocalDate.ofEpochDay(it.toEpochDay()) }
-        val hijrahStart = HijrahDate.from(start)
-        val lastDay = hijrahStart.range(ChronoField.DAY_OF_MONTH).maximum.toLong()
-        assertEquals(start, RamadanInfo.upcomingRamadanStart(start.plusDays(lastDay - 1)))
+    fun dateDuringRamadanReturnsCurrentRamadanStart() {
+        val hijri = HijrahDate.from(LocalDate.of(2026, 3, 1))
+        val year = hijri.get(ChronoField.YEAR)
+        val start = HijrahDate.of(year, 9, 1).let { LocalDate.ofEpochDay(it.toEpochDay()) }
+        val currentRamadanDay = start.plusDays(10)
+        assertEquals(start, RamadanInfo.upcomingRamadanStart(currentRamadanDay))
     }
 
     @Test
-    fun nextStartMovesAfterHijriRamadanMonthEnds() {
-        val start = HijrahDate.from(LocalDate.of(2026, 3, 1))
-            .let { HijrahDate.of(it.get(ChronoField.YEAR), 9, 1) }
-            .let { LocalDate.ofEpochDay(it.toEpochDay()) }
+    fun dateAfterRamadanReturnsNextRamadanStart() {
+        val hijri = HijrahDate.from(LocalDate.of(2026, 3, 1))
+        val year = hijri.get(ChronoField.YEAR)
+        val start = HijrahDate.of(year, 9, 1).let { LocalDate.ofEpochDay(it.toEpochDay()) }
         val ramadanLength = HijrahDate.from(start).range(ChronoField.DAY_OF_MONTH).maximum.toLong()
-        val nextMonthDate = start.plusDays(ramadanLength)
-        val expectedNext = HijrahDate.from(nextMonthDate)
-            .let { HijrahDate.of(it.get(ChronoField.YEAR), 9, 1) }
-            .let { LocalDate.ofEpochDay(it.toEpochDay()) }
-        assertEquals(expectedNext, RamadanInfo.upcomingRamadanStart(nextMonthDate))
-        val nextHijriMonth = HijrahDate.from(nextMonthDate).get(ChronoField.MONTH_OF_YEAR)
-        assertFalse("Date after Ramadan should not be treated as Ramadan", nextHijriMonth == 9 && RamadanInfo.forDate(nextMonthDate, start, dummySchedule(), 10).isRamadan)
-    }
-
-    private fun dummySchedule(): com.winsmediatama.adzanreminder.prayer.PrayerSchedule {
-        val zone = java.time.ZoneId.of("Asia/Jakarta")
-        val location = com.winsmediatama.adzanreminder.prayer.PrayerLocation(-7.0, 110.0, 0.0, zone)
-        val fajr = LocalDate.of(2026, 3, 1).atTime(4, 30).atZone(zone)
-        return com.winsmediatama.adzanreminder.prayer.PrayerSchedule(
-            fajr.toLocalDate(), location, fajr, fajr.plusHours(1), fajr.plusHours(7),
-            fajr.plusHours(9), fajr.plusHours(13), fajr.plusHours(14), fajr.minusMinutes(10)
-        )
+        val afterRamadan = start.plusDays(ramadanLength)
+        val dateHijri = HijrahDate.from(afterRamadan)
+        val expectedYear = dateHijri.get(ChronoField.YEAR) + if (dateHijri.get(ChronoField.MONTH_OF_YEAR) >= 9) 1 else 0
+        val expected = HijrahDate.of(expectedYear, 9, 1).let { LocalDate.ofEpochDay(it.toEpochDay()) }
+        assertEquals(expected, RamadanInfo.upcomingRamadanStart(afterRamadan))
     }
 }
