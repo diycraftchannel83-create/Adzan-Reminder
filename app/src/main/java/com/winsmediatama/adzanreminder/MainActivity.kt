@@ -50,12 +50,14 @@ class MainActivity:ComponentActivity(){
   val locationManager=PrayerLocationManager(this)
   val alarmScheduler=PrayerAlarmScheduler(this)
   setContent {
-   val permissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){}\n   val notificationPermissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){}
+   val permissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){}
+   val notificationPermissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){}
    MaterialTheme(colorScheme=darkColorScheme(primary=Color(0xFF6EE7B7),secondary=Color(0xFFD6B56D),background=Color(0xFF071B16),surface=Color(0xFF102820),onPrimary=Color(0xFF062018),onBackground=Color(0xFFE8F5EE),onSurface=Color(0xFFE8F5EE))){
     Dashboard(start,saved,locationManager,alarmScheduler,
      saveSettings=preferences::save,
      saveGps={lat,lon,zone,accuracy->preferences.saveGps(lat,lon,zone,accuracy)},
-     requestPermission={permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION))},\n     requestNotificationPermission={if(android.os.Build.VERSION.SDK_INT>=33)notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)},
+     requestPermission={permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION))},
+     requestNotificationPermission={if(android.os.Build.VERSION.SDK_INT>=33)notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)},
      hasPermission={ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED})
    }
   }
@@ -154,7 +156,10 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
  if(ramadanPanel){
   val info=RamadanInfo.forDate(date,null,today,imsakMinutes)
   AlertDialog(onDismissRequest={ramadanPanel=false},title={Text("Ramadan & Imsak")},text={Column{
-   Text("Ramadan diperkirakan mulai: ${info.ramadanStart}")\n   info.dayNumber?.let{Text("Hari Ramadan ke-$it")}\n   info.daysUntilRamadan?.let{Text("Perkiraan ${it} hari menuju Ramadan")}\n   Text("Imsak hari ini: ${info.imsakTime?: "--"}")
+   Text("Ramadan diperkirakan mulai: ${info.ramadanStart}")
+   info.dayNumber?.let{Text("Hari Ramadan ke-$it")}
+   info.daysUntilRamadan?.let{Text("Perkiraan ${it} hari menuju Ramadan")}
+   Text("Imsak hari ini: ${info.imsakTime?: "--"}")
    Text("Buka puasa / Magrib: ${info.iftarTime?: "--"}")
    Text("Pengaturan imsak: ${imsakMinutes} menit sebelum Subuh")
    Spacer(Modifier.height(8.dp))
