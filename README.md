@@ -48,13 +48,20 @@ Offline-first Android prayer schedule and reminder foundation.
 - Shows imsak offset (configurable 0–30 minutes before Fajr) and Maghrib/iftar time.
 - Hijri calendar estimate may differ from Indonesia's official rukyat/authority decision. No official Ramadan date table has been integrated yet.
 
+## QA and audit status
+
+- Audit patches applied: settings dialog scrolling, persistence keys for audio/volume/imsak, GPS label persistence, audio-focus denial handling, system date/time/timezone/app-update alarm rescheduling, and elevation correction for sunrise/Maghrib.
+- Unit tests added for prayer-event chronology, Asr madhab ordering, method differences, next-prayer rollover, and Indonesia timezone resolver boundaries.
+- CI validates all five downloaded MP3 files for count, size, and basic MP3 signature, then runs unit tests before building.
+- **Build/test intentionally not executed during this patch phase** per request. CI validation remains pending.
+
 ## Accuracy & limitations
-- Solar events use a NOAA-style approximation; results need comparison against official schedules across many dates and locations.
+- Solar events use a NOAA-style approximation; sanity unit tests cover event ordering, but results still need comparison against official schedules across many dates and locations.
 - Kemenag parity is not verified.
 - Imsak is an adjustable convenience offset, not a separate astronomical event.
 - GPS elevation is not currently incorporated.
 - Coordinate timezone lookup is approximate in Indonesia and fallback elsewhere.
-- AlarmManager inexact delivery is subject to Android power management.
+- AlarmManager uses inexact `setAndAllowWhileIdle()` delivery and is subject to Android power management. Alarm schedules are now refreshed after boot, date/time/timezone changes, and app replacement.
 - Notification permission must be granted by the user.
 - Widget updates periodically and may be delayed by OS policy.
 
