@@ -7,7 +7,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.winsmediatama.adzanreminder.R
+import com.winsmediatama.adzanreminder.data.PrayerPreferences
+import com.winsmediatama.adzanreminder.prayer.*
+import java.time.LocalDate
+import java.time.ZoneId
 
 class PrayerAlarmReceiver:BroadcastReceiver(){
  override fun onReceive(context:Context,intent:Intent){
@@ -22,5 +25,16 @@ class PrayerAlarmReceiver:BroadcastReceiver(){
    .setPriority(NotificationCompat.PRIORITY_HIGH)
    .setAutoCancel(true).build()
   manager.notify(name.hashCode(),notification)
+
+  // Rolling reschedule: each delivered alarm refreshes the next two days.
+  val settings=PrayerPreferences(context).read()
+  if(settings.notificationsEnabled){
+   val zone=runCatching{ZoneId.of(settings.zoneId)}.getOrElse{ZoneId.systemDefault()}
+   val location=PrayerLocation(settings.latitude,settings.longitude,0.0,zone,settings.cityName)
+   val config=PrayerCalculationConfig(method=runCatching{PrayerMethod.valueOf(settings.method)}.getOrDefault(PrayerMethod.KEMENAG_INDONESIA),asrMadhab=runCatching{AsrMadhab.valueOf(settings.asrMadhab)}.getOrDefault(AsrMadhab.SHAFI))
+   val engine=PrayerCalculationEngine()
+   val date=LocalDate.now(zone)
+   PrayerAlarmScheduler(context).schedule(listOf(engine.calculate(date,location,config),engine.calculate(date.plusDays(1),location,config)),true)
+  }
  }
 }
