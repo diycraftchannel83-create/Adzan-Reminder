@@ -50,12 +50,12 @@ class MainActivity:ComponentActivity(){
   val locationManager=PrayerLocationManager(this)
   val alarmScheduler=PrayerAlarmScheduler(this)
   setContent {
-   val permissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){}
+   val permissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){}\n   val notificationPermissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){}
    MaterialTheme(colorScheme=darkColorScheme(primary=Color(0xFF6EE7B7),secondary=Color(0xFFD6B56D),background=Color(0xFF071B16),surface=Color(0xFF102820),onPrimary=Color(0xFF062018),onBackground=Color(0xFFE8F5EE),onSurface=Color(0xFFE8F5EE))){
     Dashboard(start,saved,locationManager,alarmScheduler,
      saveSettings=preferences::save,
      saveGps={lat,lon,zone,accuracy->preferences.saveGps(lat,lon,zone,accuracy)},
-     requestPermission={permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.POST_NOTIFICATIONS))},
+     requestPermission={permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION))},\n     requestNotificationPermission={if(android.os.Build.VERSION.SDK_INT>=33)notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)},
      hasPermission={ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED})
    }
   }
@@ -64,7 +64,7 @@ class MainActivity:ComponentActivity(){
 
 @Composable
 private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManager:PrayerLocationManager,alarmScheduler:PrayerAlarmScheduler,
- saveSettings:(PrayerSettings)->Unit,saveGps:(Double,Double,ZoneId,Float?)->Unit,requestPermission:()->Unit,hasPermission:()->Boolean){
+ saveSettings:(PrayerSettings)->Unit,saveGps:(Double,Double,ZoneId,Float?)->Unit,requestPermission:()->Unit,requestNotificationPermission:()->Unit,hasPermission:()->Boolean){
  var city by remember{mutableStateOf(initial)}
  var gpsPoint by remember{mutableStateOf(if(initialSettings.useGps) initialSettings.latitude to initialSettings.longitude else null)}
  var zone by remember{mutableStateOf(runCatching{ZoneId.of(initialSettings.zoneId)}.getOrElse{ZoneId.systemDefault()})}
@@ -146,7 +146,7 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
   Divider();Text("Asar")
   AsrMadhab.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(asr==m,onClick={asr=m});Text(if(m==AsrMadhab.SHAFI)"Syafi'i" else "Hanafi")}}
   Divider()
-  Row(verticalAlignment=Alignment.CenterVertically){Checkbox(notifications,onCheckedChange={notifications=it});Text("Aktifkan notifikasi waktu salat")}
+  Row(verticalAlignment=Alignment.CenterVertically){Checkbox(notifications,onCheckedChange={notifications=it;if(it)requestNotificationPermission()});Text("Aktifkan notifikasi waktu salat")}
   Text("Imsak: ${imsakMinutes} menit sebelum Subuh")
   Slider(value=imsakMinutes.toFloat(),onValueChange={imsakMinutes=it.toInt()},valueRange=0f..30f,steps=29)
   Text("Pengaturan disimpan otomatis.")
