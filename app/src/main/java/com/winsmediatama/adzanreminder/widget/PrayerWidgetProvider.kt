@@ -16,10 +16,16 @@ class PrayerWidgetProvider:AppWidgetProvider(){
   val zone=runCatching{ZoneId.of(settings.zoneId)}.getOrElse{ZoneId.systemDefault()}
   val location=PrayerLocation(settings.latitude,settings.longitude,0.0,zone,settings.cityName)
   val config=PrayerCalculationConfig(method=runCatching{PrayerMethod.valueOf(settings.method)}.getOrDefault(PrayerMethod.KEMENAG_INDONESIA),asrMadhab=runCatching{AsrMadhab.valueOf(settings.asrMadhab)}.getOrDefault(AsrMadhab.SHAFI))
-  val schedule=PrayerCalculationEngine().calculate(LocalDate.now(zone),location,config)
+  val engine=PrayerCalculationEngine()
+  val date=LocalDate.now(zone)
+  val schedule=engine.calculate(date,location,config)
+  val tomorrow=engine.calculate(date.plusDays(1),location,config)
+  val now=java.time.ZonedDateTime.now(zone)
+  val next=NextPrayerCalculator.findNext(schedule,tomorrow,now)
   val views=RemoteViews(context.packageName,R.layout.prayer_widget)
   views.setTextViewText(R.id.widget_location,settings.cityName)
   views.setTextViewText(R.id.widget_date,LocalDate.now(zone).toString())
+  views.setTextViewText(R.id.widget_next,next?.let { "Salat berikutnya: ${it.name} ${PrayerTimeFormatter.format(it.time)} • ${PrayerTimeFormatter.countdown(it.time,now)}" } ?: "Salat berikutnya: --")
   views.setTextViewText(R.id.widget_prayers,"Subuh ${schedule.fajr?.toLocalTime()}  •  Zuhur ${schedule.dhuhr?.toLocalTime()}\nAsar ${schedule.asr?.toLocalTime()}  •  Magrib ${schedule.maghrib?.toLocalTime()}\nIsya ${schedule.isha?.toLocalTime()}")
   ids.forEach{manager.updateAppWidget(it,views)}
  }
