@@ -89,6 +89,9 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
  var adhanAudioEnabled by remember{mutableStateOf(initialSettings.adhanAudioEnabled)}
  var adhanVolume by remember{mutableFloatStateOf(initialSettings.adhanVolume)}
  val context=LocalContext.current
+ val alarmManager=context.getSystemService(android.app.AlarmManager::class.java)
+ var exactAlarmAllowed by remember{mutableStateOf(android.os.Build.VERSION.SDK_INT<31 || alarmManager.canScheduleExactAlarms())}
+ val exactAlarmAccessLauncher=rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()){exactAlarmAllowed=android.os.Build.VERSION.SDK_INT<31 || alarmManager.canScheduleExactAlarms()}
  var now by remember{mutableStateOf(Instant.now())}
  LaunchedEffect(Unit){while(true){now=Instant.now();kotlinx.coroutines.delay(1000)}}
  val date=now.atZone(zone).toLocalDate()
@@ -159,6 +162,10 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
   PrayerMethod.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(method==m,onClick={method=m});Text(m.name.replace('_',' '))}}
   Divider();Text("Asar")
   AsrMadhab.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(asr==m,onClick={asr=m});Text(if(m==AsrMadhab.SHAFI)"Syafi'i" else "Hanafi")}}
+  Divider()
+  Text(if(exactAlarmAllowed)"Alarm tepat waktu: diizinkan" else "Alarm tepat waktu: belum diizinkan",color=if(exactAlarmAllowed)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
+  if(android.os.Build.VERSION.SDK_INT>=31 && !exactAlarmAllowed){OutlinedButton(onClick={exactAlarmAccessLauncher.launch(Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).setData(android.net.Uri.parse("package:${context.packageName}")))},modifier=Modifier.fillMaxWidth()){Text("Izinkan alarm tepat waktu")}
+  Text("Jika izin tidak diberikan, aplikasi tetap memakai alarm Android yang dapat terlambat karena optimasi baterai.",style=MaterialTheme.typography.bodySmall)
   Divider()
   Row(verticalAlignment=Alignment.CenterVertically){Checkbox(notifications,onCheckedChange={notifications=it;if(it)requestNotificationPermission()});Text("Aktifkan notifikasi waktu salat")}
   Text("Imsak: ${imsakMinutes} menit sebelum Subuh")
