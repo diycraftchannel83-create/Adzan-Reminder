@@ -28,9 +28,12 @@ class PrayerWidgetProvider:AppWidgetProvider(){
   views.setTextViewText(R.id.widget_location,settings.cityName)
   views.setTextViewText(R.id.widget_date,date.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy",Locale("id","ID"))))
   views.setTextViewText(R.id.widget_next,next?.let { "Salat berikutnya: ${it.name} ${PrayerTimeFormatter.format(it.time)} • ${PrayerTimeFormatter.countdown(it.time,now)}" } ?: "Salat berikutnya: --")
-  val prayerText = "Subuh ${schedule.fajr?.let{PrayerTimeFormatter.format(it)} ?: "--"}  •  Zuhur ${schedule.dhuhr?.let{PrayerTimeFormatter.format(it)} ?: "--}" +
-   "\\nAsar ${schedule.asr?.let{PrayerTimeFormatter.format(it)} ?: "--"}  •  Magrib ${schedule.maghrib?.let{PrayerTimeFormatter.format(it)} ?: "--}" +
-   "\\nIsya ${schedule.isha?.let{PrayerTimeFormatter.format(it)} ?: "--"}"
+  val fajrText=schedule.fajr?.let{PrayerTimeFormatter.format(it)} ?: "--"
+  val dhuhrText=schedule.dhuhr?.let{PrayerTimeFormatter.format(it)} ?: "--"
+  val asrText=schedule.asr?.let{PrayerTimeFormatter.format(it)} ?: "--"
+  val maghribText=schedule.maghrib?.let{PrayerTimeFormatter.format(it)} ?: "--"
+  val ishaText=schedule.isha?.let{PrayerTimeFormatter.format(it)} ?: "--"
+  val prayerText="Subuh $fajrText  •  Zuhur $dhuhrText\\nAsar $asrText  •  Magrib $maghribText\\nIsya $ishaText"
   views.setTextViewText(R.id.widget_prayers,prayerText)
   ids.forEach{manager.updateAppWidget(it,views)}
  }
