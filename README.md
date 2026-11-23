@@ -66,7 +66,7 @@ Offline-first Android prayer schedule and reminder foundation.
 - Widget updates periodically and may be delayed by OS policy.
 
 ## Build/CI
-- Android CI builds Debug APK, verifies APK output, and uploads artifact for 14 days.
+- Android CI is temporarily **manual-only** (`workflow_dispatch`) during the requested patch-only phase. When manually run, it validates MP3 assets, runs unit tests, builds Debug APK, verifies APK output, and uploads artifact for 14 days.
 - CI downloads five adhan MP3s from the listed Internet Archive source before building; the APK contains the audio for offline playback.
 
 ## Further refinement roadmap
