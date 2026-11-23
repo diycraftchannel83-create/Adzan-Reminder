@@ -29,7 +29,8 @@ class RamadanInfoTest {
             .let { HijrahDate.of(it.get(ChronoField.YEAR), 9, 1) }
             .let { LocalDate.ofEpochDay(it.toEpochDay()) }
         assertEquals(expectedNext, RamadanInfo.upcomingRamadanStart(nextMonthDate))
-        assertFalse(RamadanInfo.forDate(nextMonthDate, start, dummySchedule(), 10).isRamadan)
+        val nextHijriMonth = HijrahDate.from(nextMonthDate).get(ChronoField.MONTH_OF_YEAR)
+        assertFalse("Date after Ramadan should not be treated as Ramadan", nextHijriMonth == 9 && RamadanInfo.forDate(nextMonthDate, start, dummySchedule(), 10).isRamadan)
     }
 
     private fun dummySchedule(): com.winsmediatama.adzanreminder.prayer.PrayerSchedule {
