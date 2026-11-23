@@ -13,8 +13,9 @@ class RamadanInfoTest {
         val start = HijrahDate.from(LocalDate.of(2026, 3, 1))
             .let { HijrahDate.of(it.get(ChronoField.YEAR), 9, 1) }
             .let { LocalDate.ofEpochDay(it.toEpochDay()) }
-        assertEquals(start, RamadanInfo.upcomingRamadanStart(start.plusDays(28)))
-        assertEquals(start, RamadanInfo.upcomingRamadanStart(start.plusDays(29)))
+        val hijrahStart = HijrahDate.from(start)
+        val lastDay = hijrahStart.range(ChronoField.DAY_OF_MONTH).maximum.toLong()
+        assertEquals(start, RamadanInfo.upcomingRamadanStart(start.plusDays(lastDay - 1)))
     }
 
     @Test
@@ -22,7 +23,8 @@ class RamadanInfoTest {
         val start = HijrahDate.from(LocalDate.of(2026, 3, 1))
             .let { HijrahDate.of(it.get(ChronoField.YEAR), 9, 1) }
             .let { LocalDate.ofEpochDay(it.toEpochDay()) }
-        val nextMonthDate = start.plusDays(30)
+        val ramadanLength = HijrahDate.from(start).range(ChronoField.DAY_OF_MONTH).maximum.toLong()
+        val nextMonthDate = start.plusDays(ramadanLength)
         val expectedNext = HijrahDate.from(nextMonthDate)
             .let { HijrahDate.of(it.get(ChronoField.YEAR), 9, 1) }
             .let { LocalDate.ofEpochDay(it.toEpochDay()) }
