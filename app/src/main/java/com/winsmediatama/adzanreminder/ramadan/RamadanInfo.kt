@@ -22,7 +22,9 @@ object RamadanInfo{
  fun forDate(date:LocalDate,ramadanStart:LocalDate?,schedule:PrayerSchedule,imsakMinutes:Int=10):RamadanDailyInfo{
   val start=ramadanStart?:upcomingRamadanStart(date)
   val day=ChronoUnit.DAYS.between(start,date)
-  val inRamadan=day in 0..29
+  val hijriStart=HijrahDate.from(start)
+  val ramadanLength=if(hijriStart.get(java.time.temporal.ChronoField.MONTH_OF_YEAR)==9) hijriStart.range(java.time.temporal.ChronoField.DAY_OF_MONTH).maximum.toInt() else 30
+  val inRamadan=day in 0 until ramadanLength
   val daysUntil=if(date.isBefore(start))ChronoUnit.DAYS.between(date,start) else null
   return RamadanDailyInfo(inRamadan,if(inRamadan)day.toInt()+1 else null,daysUntil,
    schedule.fajr?.minusMinutes(imsakMinutes.coerceIn(0, 60).toLong())?.toLocalTime()?.toString(),
