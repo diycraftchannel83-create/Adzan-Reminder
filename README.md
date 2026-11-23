@@ -56,6 +56,8 @@ Offline-first Android prayer schedule and reminder foundation.
 - CI validates all five downloaded MP3 files for count, size, and basic MP3 signature, then runs unit tests before building.
 - Optional exact alarm access is requested from settings; if unavailable, scheduler falls back to Android inexact alarms.
 - **Build/test intentionally not executed during this patch phase** per request. CI validation remains pending.
+- Notification settings now display Android 13+ permission status and provide a direct request action if permission was denied.
+- Audio playback notification distinguishes preparation from active playback.
 
 ## Accuracy & limitations
 - Solar events use a NOAA-style approximation; sanity unit tests cover event ordering, but results still need comparison against official schedules across many dates and locations.
@@ -63,8 +65,9 @@ Offline-first Android prayer schedule and reminder foundation.
 - Imsak is an adjustable convenience offset, not a separate astronomical event.
 - GPS elevation is not currently obtained; the engine accepts elevation input and applies a corrected sunrise/Maghrib horizon adjustment when elevation is supplied.
 - Coordinate timezone lookup is approximate in Indonesia and fallback elsewhere.
-- AlarmManager uses inexact `setAndAllowWhileIdle()` delivery and is subject to Android power management. Alarm schedules are now refreshed after boot, date/time/timezone changes, and app replacement.
-- Notification permission must be granted by the user.
+- AlarmManager uses exact alarms when supported and permitted; otherwise it falls back to inexact `setAndAllowWhileIdle()` and remains subject to Android power management. Alarm schedules are refreshed after boot, date/time/timezone changes, and app replacement.
+- Notification permission must be granted by the user on Android 13+; the settings dialog displays permission status and a retry action.
+- Widget countdown is a snapshot refreshed by Android widget updates (typically no more frequent than 30 minutes) and is not a live second-by-second countdown.
 - Widget updates periodically and may be delayed by OS policy.
 
 ## Build/CI
