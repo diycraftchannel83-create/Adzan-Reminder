@@ -20,8 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.winsmediatama.adzanreminder.data.PrayerPreferences
+import com.winsmediatama.adzanreminder.data.PrayerSettings
+import com.winsmediatama.adzanreminder.location.CoordinateTimeZoneResolver
 import com.winsmediatama.adzanreminder.location.PrayerLocationManager
+import com.winsmediatama.adzanreminder.notifications.PrayerAlarmScheduler
 import com.winsmediatama.adzanreminder.prayer.*
+import com.winsmediatama.adzanreminder.ramadan.RamadanInfo
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -39,15 +44,18 @@ private val cities=listOf(
 class MainActivity:ComponentActivity(){
  override fun onCreate(savedInstanceState:Bundle?){
   super.onCreate(savedInstanceState)
-  val prefs=getSharedPreferences("adzan_reminder",Context.MODE_PRIVATE)
-  val start=cities.firstOrNull{it.name==prefs.getString("city","Tasikmalaya")}?:cities.first()
+  val preferences=PrayerPreferences(this)
+  val saved=preferences.read()
+  val start=cities.firstOrNull{it.name==saved.cityName}?:City(saved.cityName,saved.latitude,saved.longitude,saved.zoneId)
   val locationManager=PrayerLocationManager(this)
+  val alarmScheduler=PrayerAlarmScheduler(this)
   setContent {
    val permissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){}
    MaterialTheme(colorScheme=darkColorScheme(primary=Color(0xFF6EE7B7),secondary=Color(0xFFD6B56D),background=Color(0xFF071B16),surface=Color(0xFF102820),onPrimary=Color(0xFF062018),onBackground=Color(0xFFE8F5EE),onSurface=Color(0xFFE8F5EE))){
-    Dashboard(start,locationManager,
-     saveCity={prefs.edit().putString("city",it.name).apply()},
-     requestPermission={permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION))},
+    Dashboard(start,saved,locationManager,alarmScheduler,
+     saveSettings=preferences::save,
+     saveGps={lat,lon,zone,accuracy->preferences.saveGps(lat,lon,zone,accuracy)},
+     requestPermission={permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.POST_NOTIFICATIONS))},
      hasPermission={ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED})
    }
   }
@@ -55,19 +63,23 @@ class MainActivity:ComponentActivity(){
 }
 
 @Composable
-private fun Dashboard(initial:City,locationManager:PrayerLocationManager,saveCity:(City)->Unit,requestPermission:()->Unit,hasPermission:()->Boolean){
+private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManager:PrayerLocationManager,alarmScheduler:PrayerAlarmScheduler,
+ saveSettings:(PrayerSettings)->Unit,saveGps:(Double,Double,ZoneId,Float?)->Unit,requestPermission:()->Unit,hasPermission:()->Boolean){
  var city by remember{mutableStateOf(initial)}
- var gpsPoint by remember{mutableStateOf<Pair<Double,Double>?>(null)}
+ var gpsPoint by remember{mutableStateOf(if(initialSettings.useGps) initialSettings.latitude to initialSettings.longitude else null)}
+ var zone by remember{mutableStateOf(runCatching{ZoneId.of(initialSettings.zoneId)}.getOrElse{ZoneId.systemDefault()})}
  var picker by remember{mutableStateOf(false)}
  var settings by remember{mutableStateOf(false)}
- var status by remember{mutableStateOf("Lokasi manual • ${initial.zone}")}
+ var ramadanPanel by remember{mutableStateOf(false)}
+ var status by remember{mutableStateOf(if(initialSettings.useGps)"GPS tersimpan • ${zone.id}" else "Lokasi manual • ${initial.zone}")}
  var accuracy by remember{mutableStateOf<String?>(null)}
  var message by remember{mutableStateOf<String?>(null)}
- var method by remember{mutableStateOf(PrayerMethod.KEMENAG_INDONESIA)}
- var asr by remember{mutableStateOf(AsrMadhab.SHAFI)}
+ var method by remember{mutableStateOf(runCatching{PrayerMethod.valueOf(initialSettings.method)}.getOrDefault(PrayerMethod.KEMENAG_INDONESIA))}
+ var asr by remember{mutableStateOf(runCatching{AsrMadhab.valueOf(initialSettings.asrMadhab)}.getOrDefault(AsrMadhab.SHAFI))}
+ var notifications by remember{mutableStateOf(initialSettings.notificationsEnabled)}
+ var imsakMinutes by remember{mutableIntStateOf(initialSettings.imsakMinutes)}
  var now by remember{mutableStateOf(Instant.now())}
  LaunchedEffect(Unit){while(true){now=Instant.now();kotlinx.coroutines.delay(1000)}}
- val zone=ZoneId.of(city.zone)
  val date=now.atZone(zone).toLocalDate()
  val coords=gpsPoint?: (city.lat to city.lon)
  val location=PrayerLocation(coords.first,coords.second,0.0,zone,city.name)
@@ -78,6 +90,11 @@ private fun Dashboard(initial:City,locationManager:PrayerLocationManager,saveCit
  val localNow=now.atZone(zone)
  val next=NextPrayerCalculator.findNext(today,tomorrow,localNow)
  val rows=listOf("Subuh" to today.fajr,"Syuruq" to today.sunrise,"Zuhur" to today.dhuhr,"Asar" to today.asr,"Magrib" to today.maghrib,"Isya" to today.isha)
+ LaunchedEffect(date,location,config,notifications){
+  alarmScheduler.schedule(today,notifications)
+  alarmScheduler.schedule(tomorrow,notifications)
+  saveSettings(PrayerSettings(cityName=city.name,latitude=coords.first,longitude=coords.second,zoneId=zone.id,useGps=gpsPoint!=null,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes))
+ }
  Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)){
   Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween){
    Column{Text("ADZAN REMINDER",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelLarge);Text("Waktu Salat",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)}
@@ -98,12 +115,21 @@ private fun Dashboard(initial:City,locationManager:PrayerLocationManager,saveCit
     Button(onClick={
      if(!hasPermission())requestPermission()
      else locationManager.requestCurrentLocation{loc->
-      if(loc!=null){gpsPoint=loc.latitude to loc.longitude;status="GPS aktif • zona waktu perangkat (${zone.id})";accuracy=loc.accuracyMeters?.let{"Akurasi GPS ±${it.toInt()} m"};message="Koordinat GPS diperbarui. Jika lintas zona waktu, pilih kota/zona yang sesuai."}
-      else message="Lokasi gagal diperoleh; periksa GPS atau gunakan pemilihan kota."
+      if(loc!=null){
+       val resolvedZone=CoordinateTimeZoneResolver.resolveIndonesia(loc.latitude,loc.longitude)?:ZoneId.systemDefault()
+       gpsPoint=loc.latitude to loc.longitude;zone=resolvedZone;status="GPS aktif • zona ${resolvedZone.id}"
+       accuracy=loc.accuracyMeters?.let{"Akurasi GPS ±${it.toInt()} m"}
+       saveGps(loc.latitude,loc.longitude,resolvedZone,loc.accuracyMeters)
+       message="GPS tersimpan. Resolver zona waktu Indonesia memakai perkiraan wilayah longitude; periksa bila berada dekat batas zona."
+      }else message="Lokasi gagal diperoleh; periksa GPS atau pilih kota."
      }
     },modifier=Modifier.fillMaxWidth().padding(top=10.dp)){Text("Ambil lokasi GPS")}
     message?.let{Text(it,modifier=Modifier.padding(top=6.dp),style=MaterialTheme.typography.bodySmall)}
    }
+  }
+  Row(Modifier.fillMaxWidth().padding(top=10.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){
+   OutlinedButton(onClick={ramadanPanel=true},modifier=Modifier.weight(1f)){Text("Ramadan / Imsak")}
+   OutlinedButton(onClick={settings=true},modifier=Modifier.weight(1f)){Text(if(notifications)"Notifikasi ON" else "Notifikasi OFF")}
   }
   Text("Jadwal hari ini",modifier=Modifier.padding(top=16.dp,bottom=8.dp),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)
   LazyColumn(verticalArrangement=Arrangement.spacedBy(6.dp)){
@@ -114,11 +140,25 @@ private fun Dashboard(initial:City,locationManager:PrayerLocationManager,saveCit
    }
   }
  }
- if(picker)AlertDialog(onDismissRequest={picker=false},title={Text("Pilih kota")},text={LazyColumn(Modifier.heightIn(max=390.dp)){items(cities){c->TextButton(onClick={city=c;gpsPoint=null;status="Lokasi manual • ${c.zone}";accuracy=null;message=null;saveCity(c);picker=false},modifier=Modifier.fillMaxWidth()){Text(c.name,modifier=Modifier.fillMaxWidth())}}}},confirmButton={TextButton(onClick={picker=false}){Text("Tutup")}})
- if(settings)AlertDialog(onDismissRequest={settings=false},title={Text("Metode waktu salat")},text={Column{
+ if(picker)AlertDialog(onDismissRequest={picker=false},title={Text("Pilih kota")},text={LazyColumn(Modifier.heightIn(max=390.dp)){items(cities){c->TextButton(onClick={city=c;gpsPoint=null;zone=ZoneId.of(c.zone);status="Lokasi manual • ${c.zone}";accuracy=null;message=null;saveSettings(PrayerSettings(cityName=c.name,latitude=c.lat,longitude=c.lon,zoneId=c.zone,method=method.name,asrMadhab=asr.name,notificationsEnabled=notifications,imsakMinutes=imsakMinutes));picker=false},modifier=Modifier.fillMaxWidth()){Text(c.name,modifier=Modifier.fillMaxWidth())}}}},confirmButton={TextButton(onClick={picker=false}){Text("Tutup")}})
+ if(settings)AlertDialog(onDismissRequest={settings=false},title={Text("Pengaturan salat")},text={Column(Modifier.heightIn(max=460.dp)){
   Text("Metode perhitungan")
   PrayerMethod.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(method==m,onClick={method=m});Text(m.name.replace('_',' '))}}
   Divider();Text("Asar")
   AsrMadhab.entries.forEach{m->Row(verticalAlignment=Alignment.CenterVertically){RadioButton(asr==m,onClick={asr=m});Text(if(m==AsrMadhab.SHAFI)"Syafi'i" else "Hanafi")}}
+  Divider()
+  Row(verticalAlignment=Alignment.CenterVertically){Checkbox(notifications,onCheckedChange={notifications=it});Text("Aktifkan notifikasi waktu salat")}
+  Text("Imsak: ${imsakMinutes} menit sebelum Subuh")
+  Slider(value=imsakMinutes.toFloat(),onValueChange={imsakMinutes=it.toInt()},valueRange=0f..30f,steps=29)
+  Text("Pengaturan disimpan otomatis.")
  }},confirmButton={TextButton(onClick={settings=false}){Text("Selesai")}})
+ if(ramadanPanel){
+  val info=RamadanInfo.forDate(date,null,today,imsakMinutes)
+  AlertDialog(onDismissRequest={ramadanPanel=false},title={Text("Ramadan & Imsak")},text={Column{
+   Text("Imsak hari ini: ${info.imsakTime?: "--"}")
+   Text("Buka puasa / Magrib: ${info.iftarTime?: "--"}")
+   Text("Pengaturan imsak: ${imsakMinutes} menit sebelum Subuh")
+   Spacer(Modifier.height(8.dp))
+   Text("Tanggal Ramadan dan hitung mundur Ramadan memerlukan kalender Hijriah resmi yang akan ditambahkan setelah validasi data.")
+  }},confirmButton={TextButton(onClick={ramadanPanel=false}){Text("Tutup")}})
 }
