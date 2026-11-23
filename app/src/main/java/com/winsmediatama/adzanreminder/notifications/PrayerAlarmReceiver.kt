@@ -15,19 +15,29 @@ import java.time.ZoneId
 class PrayerAlarmReceiver:BroadcastReceiver(){
  override fun onReceive(context:Context,intent:Intent){
   val name=intent.getStringExtra("prayer_name")?: "Waktu salat"
-  val channel="prayer_times"
+  val channel="prayer_times_audio_v2"
   val manager=context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-  if(Build.VERSION.SDK_INT>=26)manager.createNotificationChannel(NotificationChannel(channel,"Pengingat Salat",NotificationManager.IMPORTANCE_HIGH).apply{description="Pengingat waktu salat"})
+  if(Build.VERSION.SDK_INT>=26)manager.createNotificationChannel(NotificationChannel(channel,"Pengingat Salat",NotificationManager.IMPORTANCE_LOW).apply{
+   description="Pengingat waktu salat; suara adzan diputar oleh aplikasi"
+   setSound(null,null)
+   enableVibration(false)
+  })
   val notification=NotificationCompat.Builder(context,channel)
    .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
    .setContentTitle("Waktu $name")
    .setContentText("Telah masuk waktu $name. Semoga Allah menerima ibadah kita.")
-   .setPriority(NotificationCompat.PRIORITY_HIGH)
+   .setPriority(NotificationCompat.PRIORITY_LOW)
    .setAutoCancel(true).build()
   manager.notify(name.hashCode(),notification)
 
-  // Rolling reschedule: each delivered alarm refreshes the next two days.
   val settings=PrayerPreferences(context).read()
+  if(settings.adhanAudioEnabled){
+   val audioIntent=Intent(context,AdhanAudioService::class.java)
+    .putExtra(AdhanAudioService.EXTRA_PRAYER,name)
+    .putExtra(AdhanAudioService.EXTRA_VOLUME,settings.adhanVolume)
+   if(Build.VERSION.SDK_INT>=26)context.startForegroundService(audioIntent) else context.startService(audioIntent)
+  }
+  // Rolling reschedule: each delivered alarm refreshes the next two days.
   if(settings.notificationsEnabled){
    val zone=runCatching{ZoneId.of(settings.zoneId)}.getOrElse{ZoneId.systemDefault()}
    val location=PrayerLocation(settings.latitude,settings.longitude,0.0,zone,settings.cityName)
