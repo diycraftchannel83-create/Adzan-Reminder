@@ -140,7 +140,39 @@ private fun Dashboard(initial:City,initialSettings:PrayerSettings,locationManage
   }
   Row(Modifier.fillMaxWidth().padding(top=18.dp,bottom=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) { Column{Text("Jadwal Sholat",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=Color(0xFFEAF7F0));Text("Hari ini • ${zone.id}",style=MaterialTheme.typography.bodySmall,color=Color(0xFFB6CFC2))};Text("6 waktu",style=MaterialTheme.typography.labelMedium,color=Color(0xFFE4C27A)) }
   LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(8.dp),contentPadding=PaddingValues(bottom=8.dp)) {
-   items(rows){(name,time)->val active=next?.name==name;Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=if(active)Color(0xFF1B4B35) else Color(0xFF11231B))){Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=13.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text(name,style=MaterialTheme.typography.titleMedium,fontWeight=if(active)FontWeight.Bold else FontWeight.Medium,color=if(active)Color(0xFF62E6B2) else Color(0xFFEAF7F0);if(active)Text("SHOLAT BERIKUTNYA",style=MaterialTheme.typography.labelSmall,color=Color(0xFFB7D9C8))};Text(PrayerTimeFormatter.format(time),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold,color=if(active)Color(0xFFE4C27A) else Color(0xFFEAF7F0))}}}
+    items(rows) { item ->
+     val name = item.first
+     val time = item.second
+     val active = next?.name == name
+     Card(
+      modifier = Modifier.fillMaxWidth(),
+      shape = RoundedCornerShape(18.dp),
+      colors = CardDefaults.cardColors(containerColor = if(active) Color(0xFF1B4B35) else Color(0xFF11231B))
+     ) {
+      Row(
+       modifier = Modifier.fillMaxWidth().padding(horizontal=16.dp, vertical=13.dp),
+       verticalAlignment = Alignment.CenterVertically
+      ) {
+       Column(modifier = Modifier.weight(1f)) {
+        Text(
+         name,
+         style = MaterialTheme.typography.titleMedium,
+         fontWeight = if(active) FontWeight.Bold else FontWeight.Medium,
+         color = if(active) Color(0xFF62E6B2) else Color(0xFFEAF7F0)
+        )
+        if(active) {
+         Text("SHOLAT BERIKUTNYA", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB7D9C8))
+        }
+       }
+       Text(
+        PrayerTimeFormatter.format(time),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        color = if(active) Color(0xFFE4C27A) else Color(0xFFEAF7F0)
+       )
+      }
+     }
+    }
   }
   Row(Modifier.fillMaxWidth().padding(top=4.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton(onClick={ramadanPanel=true},modifier=Modifier.weight(1f),shape=RoundedCornerShape(14.dp)){Text("Ramadan / Imsak")};OutlinedButton(onClick={settings=true},modifier=Modifier.weight(1f),shape=RoundedCornerShape(14.dp)){Text("Pengaturan")}}
  }
